@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand */
+  --color-primary: #5b5fef;
+  --color-primary-hover: #4c51e0;
+  --color-secondary: #7c3aed;
+
+  /* Surfaces */
+  --color-surface: #f8fafc;
+  --color-card: #ffffff;
+
+  /* Text */
+  --color-ink: #111827;
+  --color-ink-muted: #6b7280;
+
+  /* Borders */
+  --color-line: #e5e7eb;
+
+  /* Pipeline status colors (shared with the dashboard) */
+  --color-status-new: #64748b;
+  --color-status-contacted: #3b82f6;
+  --color-status-viewing: #8b5cf6;
+  --color-status-negotiating: #f59e0b;
+  --color-status-closed: #10b981;
+  --color-status-lost: #ef4444;
+
+  /* Fonts */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+}
+
+/* Subtle ambient gradient — used on the landing page only.
+   Reads as "barely there"; the dashboard stays flat. */
+@utility bg-radial-fade {
+  background-image: radial-gradient(
+    circle at top right,
+    color-mix(in srgb, var(--color-primary) 8%, transparent),
+    transparent 40%
+  );
+}
