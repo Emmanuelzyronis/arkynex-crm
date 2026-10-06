@@ -103,9 +103,10 @@ lib/db/migrations/*.sql   # drizzle-kit migrations
 
 No RLS: every query filters by the workspace `agentId` and every mutation calls
 `requireUser()` (which now resolves the workspace). Reads of the dashboard and
-reports are wrapped in a 60s `unstable_cache` (`lib/cache.ts`, tag-invalidated
-on mutation). A durable `jobs` queue (`lib/queue/*`) adds retries/backoff and is
-drained every minute by `/api/cron/process-jobs`.
+reports are cached in-process for 60s (`lib/cache.ts`, tag-invalidated on
+mutation). A durable `jobs` queue (`lib/queue/*`) adds retries/backoff and is
+drained by the consolidated daily cron, or on demand via
+`/api/cron/process-jobs`.
 
 ## Files (Vercel Blob)
 
@@ -154,13 +155,18 @@ provider isn't configured the message is still logged and tagged
 | `/api/search` | Signed-in cross-entity search for the ⌘K palette |
 | `/api/export/[entity]` | CSV export for `leads` / `deals` |
 | `/api/webhooks/clerk` | Clerk Billing webhook (signature-verified) |
-| `/api/cron/process-jobs` | Drains the durable background job queue (every minute) |
-| `/api/cron/generate-ai-actions` | Nightly AI task generation (fans out to the queue) |
+| `/api/cron/daily` | The one scheduled cron: fans out AI actions, rescores leads, creates stale-lead tasks, then drains the queue |
+| `/api/cron/process-jobs` | Drains the durable queue (callable on demand / every minute on a Pro plan) |
+| `/api/cron/generate-ai-actions` | Enqueue AI action generation |
 | `/api/cron/score-leads` | Recompute lead scores |
-| `/api/cron/stale-lead-tasks` | Daily keep-in-touch tasks for quiet leads |
+| `/api/cron/stale-lead-tasks` | Create keep-in-touch tasks for quiet leads |
 
 Cron schedules live in `vercel.json`. Protect them by setting `CRON_SECRET`
 (Vercel sends it as a bearer token).
+
+> **Plan note:** Vercel Hobby only allows daily cron jobs, so `vercel.json`
+> declares a single consolidated `/api/cron/daily` job. On Pro, add
+> `/api/cron/process-jobs` with `* * * * *` for near-real-time queue draining.
 
 ## Testing
 

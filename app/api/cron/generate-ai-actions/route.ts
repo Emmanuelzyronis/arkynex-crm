@@ -1,13 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { getActiveAgentIds } from "@/lib/ai/generate-actions";
-import { enqueueJobs } from "@/lib/queue";
+import { fanoutAiActions } from "@/lib/cron/run";
 
-/**
- * Vercel Cron — fan out nightly AI action generation onto the durable job
- * queue. `/api/cron/process-jobs` (every minute) then does the model + DB work
- * off the cron request path, with retries and backoff.
- */
+/** Vercel Cron / on-demand — fan out AI action generation onto the job queue. */
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
   if (secret) {
@@ -17,14 +12,6 @@ export async function GET(request: Request) {
     }
   }
 
-  const agents = await getActiveAgentIds();
-  const queued = await enqueueJobs(
-    agents.map((agentId) => ({
-      type: "ai.generate-actions",
-      payload: { agentId },
-      maxAttempts: 3,
-    })),
-  );
-
-  return NextResponse.json({ agents: agents.length, queued });
+  const queued = await fanoutAiActions();
+  return NextResponse.json({ queued });
 }
