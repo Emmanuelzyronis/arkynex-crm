@@ -11,6 +11,7 @@ import type {
   PropertyDocument,
 } from "@/lib/db/schema";
 import { eq, and, or, ilike, desc } from "drizzle-orm";
+import { getPublicUrl, getSignedDownloadUrl } from "@/lib/storage/blob";
 
 export type { Property, PropertyPhoto, PropertyDocument };
 
@@ -76,7 +77,7 @@ export async function getProperties(
     if (!grouped.has(propId)) {
       grouped.set(propId, { ...row.property, propertyPhotos: [] });
     }
-    if (row.photo.id) {
+    if (row.photo?.id) {
       grouped.get(propId)!.propertyPhotos.push(row.photo);
     }
   }
@@ -115,16 +116,12 @@ export async function getProperty(
   return { ...property, propertyPhotos: photos, propertyDocuments: documents };
 }
 
-/**
- * Stub — storage migration (Phase 3) will provide R2 URL generation.
- */
-export function getPhotoUrl(_storagePath: string): string {
-  throw new Error("Not yet migrated — use R2");
+/** Public URL for a photo stored in Vercel Blob. */
+export function getPhotoUrl(storagePath: string): string {
+  return getPublicUrl(storagePath);
 }
 
-/**
- * Stub — storage migration (Phase 3) will provide R2 URL generation.
- */
-export function getDocumentUrl(_storagePath: string): string {
-  throw new Error("Not yet migrated — use R2");
+/** Download URL for a document stored in Vercel Blob. */
+export function getDocumentUrl(storagePath: string): string {
+  return getSignedDownloadUrl(storagePath);
 }

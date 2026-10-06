@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "lib": [
+      "ES2022"
+    ],
+    "outDir": ".test-dist",
+    "rootDir": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmitOnError": true,
+    "types": [
+      "node"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/lib/db/schema": [
+        "./tests/stubs/db-schema.d.ts"
+      ],
+      "@/*": [
+        "./*"
+      ]
+    }
+  },
+  "include": [
+    "tests/**/*.ts",
+    "lib/ai/score-lead.ts",
+    "lib/currency.ts",
+    "lib/images.ts",
+    "lib/leads/action-plans.ts",
+    "lib/billing/plans.ts"
+  ]
+}

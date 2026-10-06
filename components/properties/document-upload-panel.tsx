@@ -3,11 +3,11 @@
 import { useRef, useState } from "react";
 import { FileText, Loader2, Trash2, Upload } from "lucide-react";
 
-import { uploadPropertyDocument, deletePropertyDocument } from "@/lib/supabase/mutations/properties";
+import { uploadPropertyDocument, deletePropertyDocument } from "@/lib/db/mutations/properties";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import type { PropertyDocument } from "@/lib/supabase/queries/properties";
+import type { PropertyDocument } from "@/lib/db/queries/properties";
 
 const docTypeOptions = [
   { value: "title_doc", label: "Title Document" },
@@ -20,11 +20,9 @@ const docTypeOptions = [
 export function DocumentUploadPanel({
   propertyId,
   documents,
-  getDocumentUrl,
 }: {
   propertyId: string;
   documents: PropertyDocument[];
-  getDocumentUrl: (path: string) => Promise<string>;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -48,16 +46,11 @@ export function DocumentUploadPanel({
     if (inputRef.current) inputRef.current.value = "";
   }
 
-  async function handleDownload(storagePath: string, docLabel: string | null) {
-    try {
-      const url = await getDocumentUrl(storagePath);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = docLabel ?? "document";
-      a.click();
-    } catch {
-      alert("Failed to generate download link. Please try again.");
-    }
+  function handleDownload(docId: string, docLabel: string | null) {
+    const a = document.createElement("a");
+    a.href = `/api/documents/${docId}`;
+    a.download = docLabel ?? "document";
+    a.click();
   }
 
   return (
@@ -116,21 +109,21 @@ export function DocumentUploadPanel({
               <FileText className="h-4 w-4 shrink-0 text-ink-muted" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-ink">
-                  {doc.label ?? docTypeOptions.find((o) => o.value === doc.doc_type)?.label ?? doc.doc_type}
+                  {doc.label ?? docTypeOptions.find((o) => o.value === doc.docType)?.label ?? doc.docType}
                 </p>
-                <p className="text-xs text-ink-muted capitalize">{doc.doc_type.replace(/_/g, " ")}</p>
+                <p className="text-xs text-ink-muted capitalize">{doc.docType.replace(/_/g, " ")}</p>
               </div>
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => handleDownload(doc.storage_path, doc.label)}
+                  onClick={() => handleDownload(doc.id, doc.label)}
                   className="text-xs font-medium text-primary hover:text-primary-hover"
                 >
                   Download
                 </button>
                 <form>
                   <input type="hidden" name="docId" value={doc.id} />
-                  <input type="hidden" name="storagePath" value={doc.storage_path} />
+                  <input type="hidden" name="storagePath" value={doc.storagePath} />
                   <input type="hidden" name="propertyId" value={propertyId} />
                   <button
                     type="submit"

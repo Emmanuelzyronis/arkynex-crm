@@ -9,6 +9,7 @@ import {
 } from "@/lib/db/schema";
 import type { Lead, Viewing, Deal, AiAction } from "@/lib/db/schema";
 import { eq, and, gte, lte, lt, desc, asc, sql } from "drizzle-orm";
+import { CACHE_TAGS, cached } from "@/lib/cache";
 
 // --- Types ---
 
@@ -68,7 +69,6 @@ const FUNNEL_STAGES: Omit<FunnelStage, "count">[] = [
 ];
 
 const SOURCE_COLORS: Record<string, string> = {
-  whatsapp: "#5B5FEF",
   referral: "#7C3AED",
   web_widget: "#A5A8F5",
   social_dm: "#10B981",
@@ -216,7 +216,7 @@ export async function getDashboardStats(
 }
 
 /** Lead pipeline funnel — count per stage for active (non-archived) leads. */
-export async function getLeadFunnel(
+async function getLeadFunnelUncached(
   agentId: string,
 ): Promise<FunnelStage[]> {
   const data = await db
@@ -275,7 +275,7 @@ export async function getRevenueTrend(
 }
 
 /** Lead sources breakdown for the donut chart. */
-export async function getLeadSources(
+async function getLeadSourcesUncached(
   agentId: string,
 ): Promise<LeadSourcePoint[]> {
   const data = await db
@@ -288,7 +288,6 @@ export async function getLeadSources(
   if (total === 0) return [];
 
   const sourceLabels: Record<string, string> = {
-    whatsapp: "WhatsApp",
     referral: "Referral",
     web_widget: "Website",
     social_dm: "Social DM",
@@ -375,7 +374,7 @@ export async function getPendingAIActions(
 }
 
 /** Run all dashboard queries in parallel — call this once from the page. */
-export async function getAllDashboardData(agentId: string) {
+async function getAllDashboardDataUncached(agentId: string) {
   const [stats, funnel, revenue, sources, upcomingViewings, actions] =
     await Promise.all([
       getDashboardStats(agentId),
@@ -395,3 +394,16 @@ export async function getAllDashboardData(agentId: string) {
     actions,
   };
 }
+
+/** Cached dashboard read models (60s TTL, purged via the `dashboard` tag). */
+export const getLeadFunnel = cached(getLeadFunnelUncached, ["lead-funnel"], {
+  tags: [CACHE_TAGS.dashboard],
+});
+export const getLeadSources = cached(getLeadSourcesUncached, ["lead-sources"], {
+  tags: [CACHE_TAGS.dashboard],
+});
+export const getAllDashboardData = cached(
+  getAllDashboardDataUncached,
+  ["dashboard-data"],
+  { tags: [CACHE_TAGS.dashboard] },
+);

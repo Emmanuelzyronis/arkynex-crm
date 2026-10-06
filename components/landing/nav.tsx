@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/landing/logo";
 
 const navLinks = [
-  { label: "Features", href: "#features", hasMenu: true },
-  { label: "Pricing", href: "#pricing" },
-  { label: "Resources", href: "#resources", hasMenu: true },
-  { label: "About", href: "#about" },
+  { label: "Features", href: "/#features", hasMenu: true },
+  { label: "Pricing", href: "/#pricing" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export function Nav() {

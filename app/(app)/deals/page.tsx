@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { redirect } from "next/navigation";
-import { CalendarDays, Trash2 } from "lucide-react";
+import { CalendarDays, Download, Trash2 } from "lucide-react";
 
-import { createClient } from "@/lib/supabase/server";
-import { getDeals } from "@/lib/supabase/queries/deals";
-import { updateDealStatus, deleteDeal } from "@/lib/supabase/mutations/deals";
+import { getDeals } from "@/lib/db/queries/deals";
+import { updateDealStatus, deleteDeal } from "@/lib/db/mutations/deals";
 import { Button } from "@/components/ui/button";
 import { initials } from "@/lib/mock-leads";
+import { requireUser } from "@/lib/auth/user";
+import { formatMoneyCompact } from "@/lib/currency";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   negotiating: { label: "Negotiating", color: "#F59E0B" },
@@ -25,10 +26,6 @@ const NEXT_STATUS: Record<string, string> = {
   docs_processing: "completed",
 };
 
-function formatNaira(n: number) {
-  if (n >= 1_000_000_000) return `₦${(n / 1_000_000_000).toFixed(1)}B`;
-  return `₦${Math.round(n / 1_000_000)}M`;
-}
 
 function probabilityColor(p: number) {
   if (p >= 0.7) return "#10B981";
@@ -37,17 +34,15 @@ function probabilityColor(p: number) {
 }
 
 export default async function DealsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const userId = await requireUser();
 
-  const deals = await getDeals(supabase);
+  const deals = await getDeals(userId);
 
   const activeDeals = deals.filter((d) => !["completed", "fallen_through"].includes(d.status));
-  const pipelineValue = activeDeals.reduce((sum, d) => sum + (d.agreed_price ?? d.asking_price), 0);
+  const pipelineValue = activeDeals.reduce((sum, d) => sum + (d.agreedPrice ?? d.askingPrice), 0);
   const commissionEarned = deals
     .filter((d) => d.status === "completed")
-    .reduce((sum, d) => sum + (d.commission_amount ?? 0), 0);
+    .reduce((sum, d) => sum + (d.commissionAmount ?? 0), 0);
 
   return (
     <div className="space-y-6">
@@ -56,20 +51,29 @@ export default async function DealsPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-ink">Deals</h1>
           <p className="mt-1 text-sm text-ink-muted">{deals.length} deal{deals.length !== 1 ? "s" : ""} total</p>
         </div>
-        <Button asChild>
-          <Link href="/deals/new">
-            <Plus className="h-4 w-4" />
-            New Deal
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- API download, not a page */}
+            <a href="/api/export/deals">
+              <Download className="h-4 w-4" />
+              Export
+            </a>
+          </Button>
+          <Button asChild>
+            <Link href="/deals/new">
+              <Plus className="h-4 w-4" />
+              New Deal
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { label: "Active Deals", value: String(activeDeals.length) },
-          { label: "Pipeline Value", value: formatNaira(pipelineValue) },
-          { label: "Commission Earned", value: formatNaira(commissionEarned) },
+          { label: "Pipeline Value", value: formatMoneyCompact(pipelineValue) },
+          { label: "Commission Earned", value: formatMoneyCompact(commissionEarned) },
           { label: "Deals Closed", value: String(deals.filter((d) => d.status === "completed").length) },
         ].map(({ label, value }) => (
           <div key={label} className="rounded-2xl border border-line bg-card p-5">
@@ -106,10 +110,10 @@ export default async function DealsPage() {
                   )}
 
                   {items.map((deal) => {
-                    const lead = deal.leads as { full_name: string } | null;
-                    const property = deal.properties as { title: string; area: string | null; price: number } | null;
-                    const value = deal.agreed_price ?? deal.asking_price;
-                    const prob = deal.closing_probability ?? 0.3;
+                    const lead = deal.lead as { fullName: string } | null;
+                    const property = deal.property as { title: string; area: string | null; price: number } | null;
+                    const value = deal.agreedPrice ?? deal.askingPrice;
+                    const prob = deal.closingProbability ?? 0.3;
                     const nextStatus = NEXT_STATUS[deal.status];
                     const nextCfg = nextStatus ? STATUS_CONFIG[nextStatus] : null;
 
@@ -120,15 +124,15 @@ export default async function DealsPage() {
 
                         <div className="mt-2.5 flex items-center gap-2">
                           <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
-                            {initials(lead?.full_name ?? "?")}
+                            {initials(lead?.fullName ?? "?")}
                           </div>
-                          <span className="truncate text-xs text-ink-muted">{lead?.full_name ?? "Lead"}</span>
+                          <span className="truncate text-xs text-ink-muted">{lead?.fullName ?? "Lead"}</span>
                         </div>
 
                         <div className="mt-3">
-                          <p className="text-base font-semibold text-ink">{formatNaira(value)}</p>
-                          {deal.commission_amount && (
-                            <p className="text-xs text-ink-muted">Commission {formatNaira(deal.commission_amount)}</p>
+                          <p className="text-base font-semibold text-ink">{formatMoneyCompact(value)}</p>
+                          {deal.commissionAmount && (
+                            <p className="text-xs text-ink-muted">Commission {formatMoneyCompact(deal.commissionAmount)}</p>
                           )}
                         </div>
 
@@ -142,10 +146,10 @@ export default async function DealsPage() {
                           </div>
                         </div>
 
-                        {deal.expected_close_date && (
+                        {deal.expectedCloseDate && (
                           <div className="mt-3 flex items-center gap-1.5 text-xs text-ink-muted">
                             <CalendarDays className="h-3.5 w-3.5" />
-                            {new Date(deal.expected_close_date).toLocaleDateString("en-NG", { month: "short", day: "numeric" })}
+                            {new Date(deal.expectedCloseDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                           </div>
                         )}
 

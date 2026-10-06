@@ -1,28 +1,16 @@
-import {
-  CreditCard,
-  Handshake,
-  Home,
-  MessageCircle,
-  Sparkles,
-  Users,
-} from "lucide-react";
+import { CreditCard, Handshake, Home, Sparkles, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export const helpCategories: { title: string; description: string; icon: LucideIcon }[] = [
   {
     title: "Getting Started",
-    description: "Set up your profile, business details and WhatsApp connection.",
+    description: "Set up your profile and business details.",
     icon: Sparkles,
   },
   {
     title: "Leads & Pipeline",
     description: "Capture, score and move leads through your pipeline.",
     icon: Users,
-  },
-  {
-    title: "WhatsApp Integration",
-    description: "Connect your number and manage AI conversation summaries.",
-    icon: MessageCircle,
   },
   {
     title: "Properties & Listings",
@@ -43,9 +31,9 @@ export const helpCategories: { title: string; description: string; icon: LucideI
 
 export const faqs: { question: string; answer: string }[] = [
   {
-    question: "How does Arkynex capture leads from WhatsApp?",
+    question: "How does Arkynex capture leads?",
     answer:
-      "Once your WhatsApp Business number is connected, incoming messages are matched to existing leads by phone number or used to create a new lead automatically. The first message is stored as the raw intake text, which AI then parses for budget, location, property type and timeline.",
+      "Leads can be added manually or captured from your website form, referrals, open houses, business cards and social DMs. Every lead is scored automatically and matched to your pipeline so nothing slips through the cracks.",
   },
   {
     question: "What are AI Actions and how often are they generated?",
@@ -55,7 +43,7 @@ export const faqs: { question: string; answer: string }[] = [
   {
     question: "How do I change my subscription plan?",
     answer:
-      "Go to Settings → Billing to compare the Starter, Pro and Agency plans and switch at any time. Changes take effect immediately and are prorated for the rest of your billing cycle via Paystack.",
+      "Go to Settings → Billing to compare the Starter, Pro and Agency plans and switch at any time. Checkout is handled securely by Clerk Billing (Stripe); changes take effect immediately and are prorated for the rest of your billing cycle.",
   },
   {
     question: "Can I add a co-agent to a deal?",
@@ -65,7 +53,7 @@ export const faqs: { question: string; answer: string }[] = [
   {
     question: "How do I upload property photos and documents?",
     answer:
-      "When adding or editing a property, use the Photos section to upload images (shown publicly on the listing) and the Documents section for private files like title deeds or survey plans. Photos are stored in Supabase Storage and served via a public URL; documents remain private to your account.",
+      "When adding or editing a property, use the Photos section to upload images (shown publicly on the listing) and the Documents section for private files like title deeds or survey plans. Files are stored in Vercel Blob; photos are served via a public URL and documents are streamed to you through an authenticated download that only your account can access.",
   },
   {
     question: "How is commission calculated?",
@@ -75,11 +63,11 @@ export const faqs: { question: string; answer: string }[] = [
   {
     question: "Is my data shared with other agents?",
     answer:
-      "No. Leads, properties, deals and communications are private to your account by default — Row Level Security ensures agents can only read and write their own records. The only shared data is your public profile (for co-agent lookups) and any property photos you mark as public listings.",
+      "No. Leads, properties, deals and communications are private to your account by default — every query and mutation is scoped to your agent account, so you can only read and write your own records. The only shared data is your public profile (for co-agent lookups) and any property photos you mark as public listings.",
   },
   {
     question: "How do I cancel my subscription?",
     answer:
-      "Go to Settings → Billing and choose Manage payment method, then cancel from the Paystack portal. Your account remains on its current plan until the end of the billing period, after which it moves to read-only access.",
+      "Go to Settings → Billing and choose Manage billing to open the Clerk subscription portal (Stripe), where you can update your payment method or cancel. Your account remains on its current plan until the end of the billing period, after which it moves to read-only access.",
   },
 ];

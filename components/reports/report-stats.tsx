@@ -1,13 +1,9 @@
 import { Handshake, Percent, TrendingUp, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-import type { ReportStatsData } from "@/lib/supabase/queries/reports";
+import type { ReportStatsData } from "@/lib/db/queries/reports";
+import { formatMoneyCompact } from "@/lib/currency";
 
-function formatNaira(n: number) {
-  if (n === 0) return "₦0";
-  if (n >= 1_000_000_000) return `₦${(n / 1_000_000_000).toFixed(1)}B`;
-  return `₦${Math.round(n / 1_000_000)}M`;
-}
 
 function StatCard({ label, value, icon: Icon }: { label: string; value: string; icon: LucideIcon }) {
   return (
@@ -26,9 +22,9 @@ function StatCard({ label, value, icon: Icon }: { label: string; value: string; 
 export function ReportStatsSection({ stats }: { stats: ReportStatsData }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <StatCard label="Total Revenue" value={formatNaira(stats.totalRevenue)} icon={Wallet} />
+      <StatCard label="Total Revenue" value={formatMoneyCompact(stats.totalRevenue)} icon={Wallet} />
       <StatCard label="Deals Closed" value={String(stats.dealsClosed)} icon={Handshake} />
-      <StatCard label="Avg Commission" value={formatNaira(stats.avgCommission)} icon={Percent} />
+      <StatCard label="Avg Commission" value={formatMoneyCompact(stats.avgCommission)} icon={Percent} />
       <StatCard label="Conversion Rate" value={`${Math.round(stats.conversionRate * 100)}%`} icon={TrendingUp} />
     </div>
   );

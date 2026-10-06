@@ -2,13 +2,9 @@
 
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-import type { RevenuePoint } from "@/lib/supabase/queries/dashboard";
+import type { RevenuePoint } from "@/lib/db/queries/dashboard";
+import { formatMoneyCompact } from "@/lib/currency";
 
-function formatCurrency(value: number) {
-  if (value === 0) return "₦0";
-  if (value >= 1_000_000_000) return `₦${(value / 1_000_000_000).toFixed(1)}B`;
-  return `₦${(value / 1_000_000).toFixed(0)}M`;
-}
 
 export function RevenueChart({ data }: { data: RevenuePoint[] }) {
   const totalRevenue = data.reduce((sum, d) => sum + d.revenue, 0);
@@ -23,7 +19,7 @@ export function RevenueChart({ data }: { data: RevenuePoint[] }) {
         <div>
           <h2 className="text-base font-semibold text-ink">Revenue Overview</h2>
           <p className="mt-2 text-2xl font-semibold tracking-tight text-ink">
-            {formatCurrency(lastMonth)}
+            {formatMoneyCompact(lastMonth)}
           </p>
           {delta !== 0 ? (
             <p className={`mt-1 text-xs font-medium ${delta >= 0 ? "text-status-closed" : "text-status-lost"}`}>
@@ -59,11 +55,11 @@ export function RevenueChart({ data }: { data: RevenuePoint[] }) {
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: "#6B7280", fontSize: 12 }}
-                tickFormatter={formatCurrency}
+                tickFormatter={formatMoneyCompact}
                 width={48}
               />
               <Tooltip
-                formatter={(value: number) => [formatCurrency(value), "Revenue"]}
+                formatter={(value: number) => [formatMoneyCompact(value), "Revenue"]}
                 contentStyle={{
                   borderRadius: 12,
                   border: "1px solid #E5E7EB",

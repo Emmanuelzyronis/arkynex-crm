@@ -1,6 +1,7 @@
 import { CalendarDays } from "lucide-react";
 
-import { formatNaira, initials } from "@/lib/mock-leads";
+import { initials } from "@/lib/mock-leads";
+import { formatMoneyCompact } from "@/lib/currency";
 import { closeDateLabel, probabilityColor, type Deal } from "@/lib/mock-deals";
 import { cn } from "@/lib/utils";
 
@@ -26,13 +27,13 @@ export function DealCard({ deal }: { deal: Deal }) {
       </div>
 
       <div className="mt-3">
-        <p className="text-base font-semibold text-ink">{formatNaira(value)}</p>
+        <p className="text-base font-semibold text-ink">{formatMoneyCompact(value)}</p>
         {hasDiscount && (
-          <p className="text-xs text-ink-muted line-through">{formatNaira(deal.askingPrice)}</p>
+          <p className="text-xs text-ink-muted line-through">{formatMoneyCompact(deal.askingPrice)}</p>
         )}
         {deal.commissionAmount != null && (
           <p className="mt-0.5 text-xs text-ink-muted">
-            Commission {formatNaira(deal.commissionAmount)}
+            Commission {formatMoneyCompact(deal.commissionAmount)}
           </p>
         )}
       </div>

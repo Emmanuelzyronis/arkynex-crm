@@ -1,13 +1,19 @@
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
-import { getAllDashboardData } from "@/lib/supabase/queries/dashboard";
+import { getAllDashboardData } from "@/lib/db/queries/dashboard";
 import { StatsRow } from "@/components/dashboard/stats-row";
 import { LeadFunnel } from "@/components/dashboard/lead-funnel";
 import { RevenueChart } from "@/components/dashboard/revenue-chart";
 import { LeadSources } from "@/components/dashboard/lead-sources";
 import { UpcomingViewings } from "@/components/dashboard/upcoming-viewings";
 import { AIActions } from "@/components/dashboard/ai-actions";
+import { requireAuthContext } from "@/lib/auth/user";
+import { getProfile } from "@/lib/db/queries/profiles";
+import { getBillingState } from "@/lib/billing/access";
+import { getOpenTasks } from "@/lib/db/queries/tasks";
+import { TaskList } from "@/components/tasks/task-list";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 function greeting() {
   const h = new Date().getHours();
@@ -17,23 +23,32 @@ function greeting() {
 }
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const context = await requireAuthContext();
+  const userId = context.workspaceId;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name")
-    .eq("id", user.id)
-    .single();
+  const [personalProfile, workspaceProfile] = await Promise.all([
+    context.userId === context.workspaceId ? Promise.resolve(null) : getProfile(context.userId),
+    getProfile(context.workspaceId),
+  ]);
 
-  const firstName = profile?.full_name?.split(" ")[0] ?? "there";
+  // Trial / subscription gate — resolved from the workspace owner's plan.
+  const billing = await getBillingState(workspaceProfile);
+  if (!billing.hasAccess) {
+    redirect("/settings?tab=billing&error=trial_expired");
+  }
+
+  const firstName =
+    (personalProfile ?? workspaceProfile)?.fullName?.split(" ")[0] ?? "there";
 
   // All queries run in parallel — single round-trip per page load
-  const { stats, funnel, revenue, sources, viewings, actions } =
-    await getAllDashboardData(supabase);
+  const [{ stats, funnel, revenue, sources, viewings, actions }, overdueTasks, todayTasks] =
+    await Promise.all([
+      getAllDashboardData(userId),
+      getOpenTasks(userId, "overdue"),
+      getOpenTasks(userId, "today"),
+    ]);
+
+  const dueTasks = [...overdueTasks, ...todayTasks].slice(0, 6);
 
   return (
     <div className="space-y-6">
@@ -47,6 +62,30 @@ export default async function DashboardPage() {
       </div>
 
       <StatsRow stats={stats} />
+
+      <section className="overflow-hidden rounded-2xl border border-line bg-card">
+        <header className="flex items-center justify-between border-b border-line px-5 py-3">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-ink">Due today</h2>
+            {overdueTasks.length > 0 && (
+              <span className="rounded-full bg-status-lost/10 px-2 py-0.5 text-[10px] font-medium text-status-lost">
+                {overdueTasks.length} overdue
+              </span>
+            )}
+          </div>
+          <Link
+            href="/tasks"
+            className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+          >
+            All tasks <ArrowRight className="h-3 w-3" />
+          </Link>
+        </header>
+        <TaskList
+          tasks={dueTasks}
+          redirectTo="/dashboard"
+          emptyLabel="No tasks due today. Add one from the Tasks page."
+        />
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <LeadFunnel stages={funnel} />

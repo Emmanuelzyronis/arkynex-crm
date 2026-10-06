@@ -2,9 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Save } from "lucide-react";
 
-import { createClient } from "@/lib/supabase/server";
-import { getLead } from "@/lib/supabase/queries/leads";
-import { updateLead } from "@/lib/supabase/mutations/update-lead";
+import { getLead } from "@/lib/db/queries/leads";
+import { updateLead } from "@/lib/db/mutations/update-lead";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -12,6 +11,7 @@ import { CurrencyInput } from "@/components/ui/currency-input";
 import { Textarea } from "@/components/ui/textarea";
 import { FormField, FormPageHeader, FormSection } from "@/components/forms/form-layout";
 import { leadSourceOptions, operatingAreas, propertyTypeOptions, timelineOptions } from "@/lib/options";
+import { requireUser } from "@/lib/auth/user";
 
 export default async function EditLeadPage({
   params,
@@ -22,23 +22,17 @@ export default async function EditLeadPage({
 }) {
   const { id } = await params;
   const { error } = await searchParams;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const userId = await requireUser();
 
-  let lead: Awaited<ReturnType<typeof getLead>>;
-  try {
-    lead = await getLead(supabase, id);
-  } catch {
-    notFound();
-  }
+  const lead = await getLead(userId, id);
+  if (!lead) notFound();
 
   return (
     <div className="max-w-3xl space-y-6">
       <FormPageHeader
         backHref={`/leads/${id}`}
         backLabel="Back to lead"
-        title={`Edit — ${lead.full_name}`}
+        title={`Edit — ${lead.fullName}`}
         description="Update contact details, requirement and notes."
       />
 
@@ -54,7 +48,7 @@ export default async function EditLeadPage({
         <div className="space-y-6">
           <FormSection title="Contact">
             <FormField label="Full name" htmlFor="fullName">
-              <Input id="fullName" name="fullName" required defaultValue={lead.full_name} />
+              <Input id="fullName" name="fullName" required defaultValue={lead.fullName} />
             </FormField>
             <FormField label="Phone number" htmlFor="phone">
               <Input id="phone" name="phone" required defaultValue={lead.phone} />
@@ -69,7 +63,7 @@ export default async function EditLeadPage({
 
           <FormSection title="Requirement">
             <FormField label="Property type" htmlFor="propertyType">
-              <Select id="propertyType" name="propertyType" defaultValue={lead.property_type ?? ""}>
+              <Select id="propertyType" name="propertyType" defaultValue={lead.propertyType ?? ""}>
                 <option value="">Any</option>
                 {propertyTypeOptions.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -81,10 +75,10 @@ export default async function EditLeadPage({
                 defaultValue={lead.bedrooms ?? ""} />
             </FormField>
             <FormField label="Budget min" htmlFor="budgetMin">
-              <CurrencyInput id="budgetMin" name="budgetMin" defaultValue={lead.budget_min ?? ""} />
+              <CurrencyInput id="budgetMin" name="budgetMin" defaultValue={lead.budgetMin ?? ""} />
             </FormField>
             <FormField label="Budget max" htmlFor="budgetMax">
-              <CurrencyInput id="budgetMax" name="budgetMax" defaultValue={lead.budget_max ?? ""} />
+              <CurrencyInput id="budgetMax" name="budgetMax" defaultValue={lead.budgetMax ?? ""} />
             </FormField>
             <FormField label="Timeline" htmlFor="timeline">
               <Select id="timeline" name="timeline" defaultValue={lead.timeline ?? ""}>
@@ -105,7 +99,7 @@ export default async function EditLeadPage({
                       type="checkbox"
                       name="areas"
                       value={area}
-                      defaultChecked={(lead.location_prefs ?? []).includes(area)}
+                      defaultChecked={(lead.locationPrefs ?? []).includes(area)}
                       className="sr-only"
                     />
                     {area}

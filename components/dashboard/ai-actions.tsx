@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 
-import type { PendingAIAction } from "@/lib/supabase/queries/dashboard";
+import type { PendingAIAction } from "@/lib/db/queries/dashboard";
 
 const priorityColor: Record<string, string> = {
   urgent: "bg-status-lost",

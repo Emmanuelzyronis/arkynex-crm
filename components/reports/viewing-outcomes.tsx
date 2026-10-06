@@ -1,4 +1,4 @@
-import type { ReportViewingOutcome } from "@/lib/supabase/queries/reports";
+import type { ReportViewingOutcome } from "@/lib/db/queries/reports";
 
 export function ViewingOutcomes({ data }: { data: ReportViewingOutcome[] }) {
   const max = Math.max(...data.map((o) => o.count), 1);

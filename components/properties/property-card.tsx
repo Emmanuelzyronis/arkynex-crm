@@ -1,8 +1,7 @@
 import { Bath, BedDouble, Eye, MessageSquare, Ruler } from "lucide-react";
 
-import { BuildingIllustration } from "@/components/landing/building-illustration";
-import { formatNaira } from "@/lib/mock-leads";
-import { illustrationKind, statusConfig, type Property } from "@/lib/mock-properties";
+import { formatMoneyCompact } from "@/lib/currency";
+import { statusConfig, type Property } from "@/lib/mock-properties";
 
 export function PropertyCard({ property }: { property: Property }) {
   const status = statusConfig[property.status];
@@ -10,11 +9,11 @@ export function PropertyCard({ property }: { property: Property }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-line bg-card transition-shadow hover:shadow-lg hover:shadow-ink/5">
       <div className="relative aspect-[16/10]">
-        <BuildingIllustration
-          className="h-full w-full"
-          accent={property.accent}
-          kind={illustrationKind(property.propertyType)}
-          gradientId={property.id}
+        <img
+          src={property.imageUrl}
+          alt={property.title}
+          loading="lazy"
+          className="h-full w-full object-cover"
         />
         <span
           className="absolute left-3 top-3 rounded-full bg-card px-2.5 py-1 text-xs font-medium shadow-sm"
@@ -29,7 +28,7 @@ export function PropertyCard({ property }: { property: Property }) {
         <p className="text-xs text-ink-muted">
           {property.area}, {property.city}
         </p>
-        <p className="mt-2 text-base font-semibold text-ink">{formatNaira(property.price)}</p>
+        <p className="mt-2 text-base font-semibold text-ink">{formatMoneyCompact(property.price)}</p>
 
         <div className="mt-3 flex items-center gap-3 text-xs text-ink-muted">
           {property.bedrooms != null && (

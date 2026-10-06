@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Building2 } from "lucide-react";
 
-import type { UpcomingViewing } from "@/lib/supabase/queries/dashboard";
+import type { UpcomingViewing } from "@/lib/db/queries/dashboard";
 
-function formatViewingTime(iso: string) {
+function formatViewingTime(iso: string | Date) {
   const d = new Date(iso);
   const now = new Date();
   const isToday = d.toDateString() === now.toDateString();
@@ -11,11 +11,11 @@ function formatViewingTime(iso: string) {
   tomorrow.setDate(tomorrow.getDate() + 1);
   const isTomorrow = d.toDateString() === tomorrow.toDateString();
 
-  const time = d.toLocaleTimeString("en-NG", { hour: "numeric", minute: "2-digit" });
+  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
   if (isToday) return `Today, ${time}`;
   if (isTomorrow) return `Tomorrow, ${time}`;
-  return d.toLocaleDateString("en-NG", { weekday: "short", month: "short", day: "numeric" }) + `, ${time}`;
+  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) + `, ${time}`;
 }
 
 export function UpcomingViewings({ viewings }: { viewings: UpcomingViewing[] }) {

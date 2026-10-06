@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { statusConfig } from "@/lib/mock-properties";
-import type { ReportTopProperty } from "@/lib/supabase/queries/reports";
+import type { ReportTopProperty } from "@/lib/db/queries/reports";
 
 export function TopPropertiesTable({ properties }: { properties: ReportTopProperty[] }) {
   return (

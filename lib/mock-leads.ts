@@ -1,8 +1,8 @@
 import {
   AtSign,
+  Building2,
   CreditCard,
   Globe,
-  MessageCircle,
   Pencil,
   UserPlus,
 } from "lucide-react";
@@ -20,9 +20,9 @@ export type LeadStage =
 
 export type LeadSource =
   | "manual"
-  | "whatsapp"
   | "web_widget"
   | "referral"
+  | "open_house"
   | "business_card"
   | "social_dm";
 
@@ -54,9 +54,9 @@ export const stageConfig: Record<LeadStage, { label: string; color: string }> = 
 
 export const sourceConfig: Record<LeadSource, { label: string; icon: LucideIcon }> = {
   manual: { label: "Manual entry", icon: Pencil },
-  whatsapp: { label: "WhatsApp", icon: MessageCircle },
   web_widget: { label: "Website", icon: Globe },
   referral: { label: "Referral", icon: UserPlus },
+  open_house: { label: "Open house", icon: Building2 },
   business_card: { label: "Business card", icon: CreditCard },
   social_dm: { label: "Social DM", icon: AtSign },
 };
@@ -85,140 +85,129 @@ export const avatarPalette = [
 export const mockLeads: Lead[] = [
   {
     id: "1",
-    name: "Tunde Adebayo",
-    phone: "+234 801 234 5678",
-    source: "whatsapp",
+    name: "Marcus Bennett",
+    phone: "+1 415 234 5678",
+    source: "web_widget",
     stage: "new",
     score: 98,
     propertyType: "Apartment",
     bedrooms: 3,
-    budgetMin: 150_000_000,
-    budgetMax: 200_000_000,
-    area: "Victoria Island",
+    budgetMin: 450_000,
+    budgetMax: 650_000,
+    area: "Downtown",
     lastContact: null,
   },
   {
     id: "2",
-    name: "Bolanle Adeyemi",
-    phone: "+234 802 345 6789",
+    name: "Sofia Alvarez",
+    phone: "+1 415 345 6789",
     source: "referral",
     stage: "contacted",
     score: 85,
     propertyType: "Apartment",
     bedrooms: 2,
-    budgetMin: 80_000_000,
-    budgetMax: 110_000_000,
-    area: "Lekki Phase 1",
+    budgetMin: 320_000,
+    budgetMax: 420_000,
+    area: "Riverside",
     lastContact: "2h ago",
   },
   {
     id: "3",
-    name: "Ibrahim Mohammed",
-    phone: "+234 803 456 7890",
-    source: "whatsapp",
+    name: "Liam O'Connor",
+    phone: "+1 415 456 7890",
+    source: "social_dm",
     stage: "viewing_scheduled",
     score: 72,
     propertyType: "House",
     bedrooms: 4,
-    budgetMin: 250_000_000,
-    budgetMax: 300_000_000,
-    area: "Ikoyi",
+    budgetMin: 750_000,
+    budgetMax: 950_000,
+    area: "Chelsea",
     lastContact: "Yesterday",
   },
   {
     id: "4",
-    name: "Funke Okoro",
-    phone: "+234 804 567 8901",
+    name: "Emily Carter",
+    phone: "+1 415 567 8901",
     source: "web_widget",
     stage: "negotiating",
     score: 60,
     propertyType: "Apartment",
     bedrooms: 2,
-    budgetMin: 60_000_000,
-    budgetMax: 75_000_000,
-    area: "Ajah",
+    budgetMin: 275_000,
+    budgetMax: 340_000,
+    area: "Greenwood",
     lastContact: "3 days ago",
   },
   {
     id: "5",
-    name: "Chidinma Eze",
-    phone: "+234 805 678 9012",
+    name: "Priya Nair",
+    phone: "+1 415 678 9012",
     source: "social_dm",
     stage: "new",
     score: 91,
     propertyType: "House",
     bedrooms: 5,
-    budgetMin: 400_000_000,
-    budgetMax: 500_000_000,
-    area: "Banana Island",
+    budgetMin: 1_200_000,
+    budgetMax: 1_600_000,
+    area: "Harbor Island",
     lastContact: null,
   },
   {
     id: "6",
-    name: "Emeka Okafor",
-    phone: "+234 806 789 0123",
+    name: "Daniel Reyes",
+    phone: "+1 415 789 0123",
     source: "referral",
     stage: "viewed",
     score: 68,
     propertyType: "Apartment",
     bedrooms: 3,
-    budgetMin: 120_000_000,
-    budgetMax: 150_000_000,
-    area: "Ikoyi",
+    budgetMin: 420_000,
+    budgetMax: 520_000,
+    area: "Chelsea",
     lastContact: "5 days ago",
   },
   {
     id: "7",
-    name: "Aisha Bello",
-    phone: "+234 807 890 1234",
+    name: "Aisha Rahman",
+    phone: "+1 415 890 1234",
     source: "manual",
     stage: "offer_made",
     score: 77,
     propertyType: "Land",
-    budgetMin: 90_000_000,
-    budgetMax: 90_000_000,
-    area: "Lekki Phase 1",
+    budgetMin: 210_000,
+    budgetMax: 210_000,
+    area: "Riverside",
     lastContact: "1 week ago",
   },
   {
     id: "8",
-    name: "Segun Williams",
-    phone: "+234 808 901 2345",
-    source: "whatsapp",
+    name: "Sean Whitfield",
+    phone: "+1 415 901 2345",
+    source: "open_house",
     stage: "closed",
     score: 88,
     propertyType: "Apartment",
     bedrooms: 4,
-    budgetMin: 180_000_000,
-    budgetMax: 220_000_000,
-    area: "Victoria Island",
+    budgetMin: 600_000,
+    budgetMax: 780_000,
+    area: "Downtown",
     lastContact: "2 weeks ago",
   },
   {
     id: "9",
-    name: "Ngozi Umeh",
-    phone: "+234 809 012 3456",
+    name: "Grace Kim",
+    phone: "+1 415 012 3456",
     source: "business_card",
     stage: "lost",
     score: 35,
     propertyType: "Commercial",
-    budgetMin: 50_000_000,
-    budgetMax: 70_000_000,
-    area: "Surulere",
+    budgetMin: 180_000,
+    budgetMax: 260_000,
+    area: "Maplewood",
     lastContact: "3 weeks ago",
   },
 ];
-
-export function formatNaira(amount: number) {
-  if (amount >= 1_000_000_000) return `₦${(amount / 1_000_000_000).toFixed(1)}B`;
-  return `₦${Math.round(amount / 1_000_000)}M`;
-}
-
-export function formatBudget(lead: Lead) {
-  return lead.budgetMin === lead.budgetMax
-    ? formatNaira(lead.budgetMin)
-    : `${formatNaira(lead.budgetMin)}–${formatNaira(lead.budgetMax)}`;
-}
 
 export function initials(name: string) {
   return name

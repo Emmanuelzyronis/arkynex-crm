@@ -2,11 +2,11 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
-import { getViewings } from "@/lib/supabase/queries/viewings";
-import { updateViewingStatus } from "@/lib/supabase/mutations/viewings";
+import { getViewings } from "@/lib/db/queries/viewings";
+import { updateViewingStatus } from "@/lib/db/mutations/viewings";
 import { Button } from "@/components/ui/button";
 import { ViewingsList } from "@/components/viewings/viewings-list";
+import { requireUser } from "@/lib/auth/user";
 
 export default async function ViewingsPage({
   searchParams,
@@ -14,11 +14,9 @@ export default async function ViewingsPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   const { status } = await searchParams;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const userId = await requireUser();
 
-  const viewings = await getViewings(supabase, { status });
+  const viewings = await getViewings(userId, { status });
 
   return (
     <div className="space-y-6">

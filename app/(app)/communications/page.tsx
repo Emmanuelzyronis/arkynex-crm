@@ -1,22 +1,20 @@
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
-import { getConversations } from "@/lib/supabase/queries/communications";
+import { getConversations } from "@/lib/db/queries/communications";
 import { CommunicationsInbox } from "@/components/communications/communications-inbox";
+import { requireUser } from "@/lib/auth/user";
 
 export default async function CommunicationsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const userId = await requireUser();
 
-  const conversations = await getConversations(supabase);
+  const conversations = await getConversations(userId);
 
   return (
     <div className="flex h-full flex-col space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-ink">Communications</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          One timeline per lead — WhatsApp, calls, email and notes in sync.
+          One timeline per lead — calls, email, SMS and notes in sync.
         </p>
       </div>
 

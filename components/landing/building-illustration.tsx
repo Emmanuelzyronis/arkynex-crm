@@ -6,7 +6,7 @@ type IllustrationProps = {
   tone?: Tone;
   /** Tint used for the building/plot/sign elements on light-tone illustrations. */
   accent?: string;
-  /** Roughly maps to property_type — residential, office/commercial tower, or land. */
+  /** Roughly maps to propertyType — residential, office/commercial tower, or land. */
   kind?: Kind;
   /**
    * Unique id used to namespace the inline <linearGradient>. Required when
@@ -100,7 +100,7 @@ export function BuildingIllustration({
   );
 }
 
-/** Empty plot with a surveyed boundary + "for sale" sign — used for property_type = 'land'. */
+/** Empty plot with a surveyed boundary + "for sale" sign — used for propertyType = 'land'. */
 function LandIllustration({
   className,
   accent,

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
-import { createProperty } from "@/lib/supabase/mutations/properties";
+import { createProperty } from "@/lib/db/mutations/properties";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -62,7 +62,7 @@ export default async function NewPropertyPage({
               </Select>
             </FormField>
             <FormField label="City" htmlFor="city">
-              <Input id="city" name="city" defaultValue="Lagos" />
+              <Input id="city" name="city" defaultValue="New York" />
             </FormField>
             <FormField label="Address" htmlFor="address" full>
               <Input id="address" name="address" placeholder="Street address (optional)" />
@@ -109,9 +109,17 @@ export default async function NewPropertyPage({
             </FormField>
           </FormSection>
 
-          <FormSection title="Photos" description="Upload photos after saving the property from its detail page.">
+          <FormSection title="Photos" description="Paste a cover image URL now, or upload photos from the property detail page after saving.">
+            <FormField label="Cover image URL" htmlFor="imageUrl" full>
+              <Input
+                id="imageUrl"
+                name="imageUrl"
+                type="url"
+                placeholder="https://images.unsplash.com/photo-..."
+              />
+            </FormField>
             <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-line bg-surface px-6 py-8 text-center sm:col-span-2">
-              <p className="text-sm text-ink-muted">Photos can be uploaded from the property detail page once it&apos;s created.</p>
+              <p className="text-sm text-ink-muted">Photos can also be uploaded from the property detail page once it&apos;s created.</p>
             </div>
           </FormSection>
         </div>

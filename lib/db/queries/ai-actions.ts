@@ -2,9 +2,24 @@ import "server-only";
 import { db } from "@/lib/db";
 import { aiActions } from "@/lib/db/schema";
 import type { AiAction } from "@/lib/db/schema";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and, desc, asc, sql } from "drizzle-orm";
 
 export type { AiAction };
+
+/** Count of outstanding (not completed, not dismissed) AI actions. */
+export async function countPendingAIActions(agentId: string): Promise<number> {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(aiActions)
+    .where(
+      and(
+        eq(aiActions.agentId, agentId),
+        eq(aiActions.completed, false),
+        eq(aiActions.dismissed, false),
+      ),
+    );
+  return row?.count ?? 0;
+}
 
 export type AIActionGroup = {
   priority: string;

@@ -1,12 +1,12 @@
 import { Building2, Gem, Hexagon, Landmark, Mountain, Target } from "lucide-react";
 
 const companies = [
-  { name: "Veritasi Homes", icon: Mountain },
-  { name: "Landmark Corporate Realty", icon: Landmark },
-  { name: "Rockstone Properties", icon: Building2 },
-  { name: "Bloomfield Investments", icon: Gem },
-  { name: "PWAN Plus", icon: Hexagon },
-  { name: "Xclusive Properties", icon: Target },
+  { name: "Northwind Realty", icon: Mountain },
+  { name: "Meridian Property Group", icon: Landmark },
+  { name: "Stonebridge Homes", icon: Building2 },
+  { name: "Crestline Estates", icon: Gem },
+  { name: "Harbor & Main", icon: Hexagon },
+  { name: "Summit Residential", icon: Target },
 ];
 
 export function TrustBar() {

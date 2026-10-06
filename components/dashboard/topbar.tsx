@@ -1,9 +1,10 @@
-import { Menu, Search } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import { LogoMark } from "@/components/landing/logo";
 import { UserMenu } from "@/components/dashboard/user-menu";
 import { LiveActionBell } from "@/components/dashboard/live-action-bell";
-import type { Tables } from "@/lib/supabase/types";
+import { SearchTrigger } from "@/components/dashboard/command-palette";
+import type { Profile } from "@/lib/db/schema";
 
 export function TopBar({
   onMenuClick,
@@ -12,7 +13,7 @@ export function TopBar({
   pendingActionCount,
 }: {
   onMenuClick: () => void;
-  profile: Tables<"profiles"> | null;
+  profile: Profile | null;
   userId: string;
   pendingActionCount: number;
 }) {
@@ -31,13 +32,7 @@ export function TopBar({
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-3">
-        <button
-          type="button"
-          aria-label="Search"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface hover:text-ink"
-        >
-          <Search className="h-5 w-5" />
-        </button>
+        <SearchTrigger />
         <LiveActionBell userId={userId} initialCount={pendingActionCount} />
         <UserMenu profile={profile} />
       </div>

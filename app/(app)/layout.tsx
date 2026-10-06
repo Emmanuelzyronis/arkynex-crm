@@ -1,44 +1,39 @@
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { requireAuthContext } from "@/lib/auth/user";
+import { getProfile } from "@/lib/db/queries/profiles";
+import { countPendingAIActions } from "@/lib/db/queries/ai-actions";
+import { getBillingState } from "@/lib/billing/access";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const context = await requireAuthContext();
 
-  if (!user) redirect("/login");
-
-  const [{ data: profile }, { count: pendingActionCount }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).single(),
-    supabase
-      .from("ai_actions")
-      .select("*", { count: "exact", head: true })
-      .eq("agent_id", user.id)
-      .eq("completed", false)
-      .eq("dismissed", false),
+  const [personalProfile, workspaceProfile, pendingActionCount] = await Promise.all([
+    context.userId === context.workspaceId ? Promise.resolve(null) : getProfile(context.userId),
+    getProfile(context.workspaceId),
+    countPendingAIActions(context.workspaceId),
   ]);
 
-  if (!profile) {
-    await supabase.from("profiles").insert({
-      id: user.id,
-      full_name: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "Agent",
-      onboarding_step: 0,
-    }).single();
-    redirect("/onboarding/profile");
-  }
+  // The workspace profile is created on first sign-in; if it's missing the
+  // account needs onboarding.
+  if (!workspaceProfile) redirect("/onboarding/profile");
 
-  if (!profile.onboarded_at && profile.onboarding_step < 4) {
-    const steps = ["profile", "business", "whatsapp", "goals"];
-    const step = steps[Math.min(profile.onboarding_step, 3)];
+  // Onboarding is a workspace-level concern (teammates join an onboarded workspace).
+  if (!workspaceProfile.onboardedAt && workspaceProfile.onboardingStep < 4) {
+    const steps = ["profile", "business", "goals"];
+    const step = steps[Math.min(workspaceProfile.onboardingStep, 2)];
     redirect(`/onboarding/${step}`);
   }
 
+  const billing = await getBillingState(workspaceProfile);
+
   return (
     <DashboardShell
-      profile={profile}
-      userId={user.id}
-      pendingActionCount={pendingActionCount ?? 0}
+      profile={personalProfile ?? workspaceProfile}
+      billing={{ status: billing.status, trialDaysLeft: billing.trialDaysLeft }}
+      userId={context.workspaceId}
+      pendingActionCount={pendingActionCount}
     >
       {children}
     </DashboardShell>

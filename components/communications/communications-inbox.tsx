@@ -1,31 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, MessageCircle, Phone, Search, StickyNote, MessageSquare } from "lucide-react";
+import { Mail, Phone, Search, StickyNote, MessageSquare } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { RealtimeThread } from "@/components/communications/realtime-thread";
 import { cn } from "@/lib/utils";
-import type { ConversationSummary, CommunicationRow } from "@/lib/supabase/queries/communications";
-import type { Tables } from "@/lib/supabase/types";
+import type { ConversationSummary, Communication } from "@/lib/db/queries/communications";
+import { loadThread } from "@/lib/db/mutations/communications";
 
 const CHANNEL_ICON: Record<string, LucideIcon> = {
-  whatsapp: MessageCircle,
   call: Phone,
   email: Mail,
   sms: MessageSquare,
   note: StickyNote,
 };
 
-function formatTime(iso: string) {
+function formatTime(iso: string | Date) {
   const d = new Date(iso);
   const diffDays = Math.floor((Date.now() - d.getTime()) / 86400000);
-  if (diffDays === 0) return d.toLocaleTimeString("en-NG", { hour: "numeric", minute: "2-digit" });
+  if (diffDays === 0) return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return d.toLocaleDateString("en-NG", { weekday: "short" });
-  return d.toLocaleDateString("en-NG", { month: "short", day: "numeric" });
+  if (diffDays < 7) return d.toLocaleDateString("en-US", { weekday: "short" });
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 export function CommunicationsInbox({
@@ -38,7 +36,7 @@ export function CommunicationsInbox({
     initialConversations[0]?.leadId ?? null,
   );
   const [mobileShowThread, setMobileShowThread] = useState(false);
-  const [threadMessages, setThreadMessages] = useState<CommunicationRow[]>([]);
+  const [threadMessages, setThreadMessages] = useState<Communication[]>([]);
   const [loadingThread, setLoadingThread] = useState(false);
 
   const filtered = initialConversations.filter((c) =>
@@ -53,14 +51,8 @@ export function CommunicationsInbox({
     setMobileShowThread(true);
     setLoadingThread(true);
 
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("communications")
-      .select("*")
-      .eq("lead_id", leadId)
-      .order("created_at", { ascending: true });
-
-    setThreadMessages((data as CommunicationRow[]) ?? []);
+    const thread = await loadThread(leadId);
+    setThreadMessages(thread?.messages ?? []);
     setLoadingThread(false);
   }
 
@@ -95,7 +87,7 @@ export function CommunicationsInbox({
           <ul className="flex-1 divide-y divide-line overflow-y-auto">
             {filtered.map((conv) => {
               const active = conv.leadId === selectedId;
-              const Icon = CHANNEL_ICON[conv.lastMessage.channel] ?? MessageCircle;
+              const Icon = CHANNEL_ICON[conv.lastMessage.channel] ?? StickyNote;
 
               return (
                 <li key={conv.leadId}>
@@ -114,7 +106,7 @@ export function CommunicationsInbox({
                       <div className="flex items-center justify-between gap-2">
                         <p className="truncate text-sm font-medium text-ink">{conv.leadName}</p>
                         <span className="shrink-0 text-[11px] text-ink-muted">
-                          {formatTime(conv.lastMessage.created_at)}
+                          {formatTime(conv.lastMessage.createdAt)}
                         </span>
                       </div>
                       <div className="mt-0.5 flex items-center gap-1.5 text-xs text-ink-muted">

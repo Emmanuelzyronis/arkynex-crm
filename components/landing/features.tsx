@@ -6,13 +6,14 @@ import {
   BarChart3,
   BedDouble,
   Home,
-  MessageCircle,
+  MessagesSquare,
   Ruler,
   Sparkles,
   Users,
 } from "lucide-react";
 
-import { BuildingIllustration } from "@/components/landing/building-illustration";
+import { avatarPhoto, propertyPhoto } from "@/lib/images";
+import { formatMoney, formatMoneyCompact } from "@/lib/currency";
 
 const stageStyles: Record<string, string> = {
   New: "bg-status-new/10 text-status-new",
@@ -22,10 +23,10 @@ const stageStyles: Record<string, string> = {
 };
 
 const leads = [
-  { name: "Tunde Adebayo", location: "Victoria Island, Lagos", stage: "New", score: 98 },
-  { name: "Bolanle Adeyemi", location: "Lekki Phase 1, Lagos", stage: "Contacted", score: 85 },
-  { name: "Ibrahim Mohammed", location: "Ikoyi, Lagos", stage: "Viewing", score: 72 },
-  { name: "Funke Okoro", location: "Ajah, Lagos", stage: "Negotiating", score: 60 },
+  { name: "Marcus Bennett", location: "Downtown, New York", stage: "New", score: 98 },
+  { name: "Sofia Alvarez", location: "Riverside, Austin", stage: "Contacted", score: 85 },
+  { name: "Liam O'Connor", location: "Chelsea, London", stage: "Viewing", score: 72 },
+  { name: "Emily Carter", location: "Greenwood, Seattle", stage: "Negotiating", score: 60 },
 ];
 
 function LeadsPreview() {
@@ -33,9 +34,14 @@ function LeadsPreview() {
     <div className="rounded-xl border border-line bg-surface p-3">
       <p className="text-xs font-medium text-ink-muted">All Leads (248)</p>
       <div className="mt-2 space-y-1.5">
-        {leads.map((lead) => (
+        {leads.map((lead, index) => (
           <div key={lead.name} className="flex items-center gap-2.5 rounded-lg bg-card p-2">
-            <div className="h-7 w-7 shrink-0 rounded-full bg-primary/10" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={avatarPhoto(index, 64)}
+              alt={lead.name}
+              className="h-7 w-7 shrink-0 rounded-full object-cover"
+            />
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-medium text-ink">{lead.name}</p>
               <p className="truncate text-[10px] text-ink-muted">{lead.location}</p>
@@ -57,15 +63,22 @@ function PropertyPreview() {
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-surface">
       <div className="relative aspect-[16/10] overflow-hidden">
-        <BuildingIllustration className="h-full w-full" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={propertyPhoto(1, 800)}
+          alt="4 Bedroom Duplex"
+          className="h-full w-full object-cover"
+        />
         <span className="absolute left-2 top-2 rounded-full bg-card px-2 py-0.5 text-[10px] font-medium text-ink shadow-sm">
           For Sale
         </span>
       </div>
       <div className="p-3">
         <p className="text-sm font-semibold text-ink">4 Bedroom Duplex</p>
-        <p className="text-xs text-ink-muted">Lekki Phase 1, Lagos</p>
-        <p className="mt-1.5 text-sm font-semibold text-ink">₦250,000,000</p>
+        <p className="text-xs text-ink-muted">Chelsea, New York</p>
+        <p className="mt-1.5 text-sm font-semibold text-ink">
+          {formatMoney(1_250_000)}
+        </p>
         <div className="mt-2 flex items-center gap-3 text-[10px] text-ink-muted">
           <span className="flex items-center gap-1">
             <BedDouble className="h-3 w-3" /> 4 Beds
@@ -74,7 +87,7 @@ function PropertyPreview() {
             <Bath className="h-3 w-3" /> 5 Baths
           </span>
           <span className="flex items-center gap-1">
-            <Ruler className="h-3 w-3" /> 300 sqm
+            <Ruler className="h-3 w-3" /> 3,200 sqft
           </span>
         </div>
       </div>
@@ -82,26 +95,26 @@ function PropertyPreview() {
   );
 }
 
-function WhatsAppPreview() {
+function InboxPreview() {
   return (
     <div className="rounded-xl border border-line bg-surface p-3">
       <div className="flex items-center gap-2">
         <div className="h-7 w-7 rounded-full bg-primary/10" />
         <div>
-          <p className="text-xs font-medium text-ink">Tunde Adebayo</p>
-          <p className="text-[10px] text-status-closed">online</p>
+          <p className="text-xs font-medium text-ink">Marcus Bennett</p>
+          <p className="text-[10px] text-status-closed">via website form</p>
         </div>
       </div>
       <div className="mt-3 space-y-2">
         <div className="max-w-[85%] rounded-xl rounded-tl-sm bg-card px-3 py-2 text-xs text-ink">
-          I&apos;m interested in a 3 bedroom apartment in Victoria Island
+          I&apos;m interested in a 3 bedroom apartment in Downtown
         </div>
         <div className="ml-auto max-w-[85%] rounded-xl rounded-tr-sm bg-primary px-3 py-2 text-xs text-white">
           Great! I have some amazing options for you.
         </div>
         <div className="flex items-start gap-1.5 rounded-xl bg-primary/5 px-3 py-2 text-[10px] text-ink-muted">
           <Sparkles className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
-          <span>AI summary: Tunde wants a 3 bedroom apartment in Victoria Island.</span>
+          <span>AI summary: Marcus wants a 3 bed in Downtown, budget ~{formatMoneyCompact(450_000)}.</span>
         </div>
       </div>
     </div>
@@ -115,7 +128,9 @@ function AnalyticsPreview() {
         <p className="text-xs font-medium text-ink-muted">Revenue Overview</p>
         <span className="text-[10px] text-ink-muted">This Month</span>
       </div>
-      <p className="mt-1 text-lg font-semibold tracking-tight text-ink">₦12,400,000</p>
+      <p className="mt-1 text-lg font-semibold tracking-tight text-ink">
+        {formatMoney(412_000)}
+      </p>
       <p className="text-[10px] font-medium text-status-closed">↑ 24% vs last month</p>
       <svg viewBox="0 0 200 70" className="mt-2 h-16 w-full" preserveAspectRatio="none">
         <defs>
@@ -146,28 +161,28 @@ const features = [
     icon: Users,
     title: "Smart Lead Management",
     description:
-      "Capture leads from WhatsApp, web, referrals and more. Automatically score and track every opportunity.",
+      "Capture leads from your website, referrals, open houses and social DMs. Every lead is scored automatically so you always know who's ready to buy.",
     preview: <LeadsPreview />,
   },
   {
     icon: Home,
-    title: "Property Management",
+    title: "Listings & Properties",
     description:
-      "List and manage your properties with photos, documents, amenities and viewing analytics.",
+      "Keep every listing organized in one place — photos, documents, amenities and viewing activity, always up to date.",
     preview: <PropertyPreview />,
   },
   {
-    icon: MessageCircle,
-    title: "WhatsApp Integration",
+    icon: MessagesSquare,
+    title: "Unified Inbox & Follow-ups",
     description:
-      "All conversations in one place. AI summarizes chats and suggests the next best action.",
-    preview: <WhatsAppPreview />,
+      "Calls, email, SMS and notes on a single timeline. AI summarizes every conversation and tells you the next best action.",
+    preview: <InboxPreview />,
   },
   {
     icon: BarChart3,
     title: "Analytics & Reports",
     description:
-      "Get real-time insights into your pipeline, revenue, team performance and lead sources.",
+      "See pipeline value, commission and conversion at a glance — and exactly where deals are stalling.",
     preview: <AnalyticsPreview />,
   },
 ];
@@ -177,14 +192,14 @@ export function Features() {
     <section id="features" className="mx-auto max-w-7xl px-6 py-20 lg:py-28">
       <div className="mx-auto max-w-2xl text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-          Everything you need to grow
+          Everything you need to close more
         </p>
         <h2 className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-          Powerful features built for real estate agents
+          One place for every lead, listing and deal
         </h2>
         <p className="mt-4 text-lg text-ink-muted">
-          From capturing leads to closing deals, Arkynex gives you everything
-          you need to run your real estate business.
+          Stop juggling spreadsheets, sticky notes and lost text threads.
+          Arkynex gives you one system that runs your whole business.
         </p>
       </div>
 

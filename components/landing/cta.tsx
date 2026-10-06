@@ -4,7 +4,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BuildingIllustration } from "@/components/landing/building-illustration";
 
-const checks = ["14-day free trial", "No credit card required", "Cancel anytime"];
+const checks = ["15-day free trial", "No credit card required", "Cancel anytime"];
 
 export function Cta() {
   return (
@@ -15,8 +15,8 @@ export function Cta() {
             Ready to close more deals?
           </h2>
           <p className="mt-3 max-w-md text-lg text-ink-muted">
-            Join thousands of real estate professionals growing their business
-            with Arkynex.
+            Join thousands of agents and teams running their pipeline on
+            Arkynex. Start free — keep every lead warm.
           </p>
 
           <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-muted">

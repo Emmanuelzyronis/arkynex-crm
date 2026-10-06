@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowRight, PlayCircle, Sparkles } from "lucide-react";
 
@@ -7,9 +8,15 @@ import { Button } from "@/components/ui/button";
 import { DashboardMockup } from "@/components/landing/dashboard-mockup";
 
 const trustItems = [
+  "15-day free trial",
   "No credit card required",
-  "Cancel anytime",
-  "Setup in 2 minutes",
+  "Set up in 2 minutes",
+];
+
+const outcomes = [
+  { value: "2.4x", label: "faster follow-up" },
+  { value: "38%", label: "more viewings booked" },
+  { value: "12 hrs", label: "saved every week" },
 ];
 
 export function Hero() {
@@ -23,30 +30,31 @@ export function Hero() {
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-3 py-1 text-xs font-medium text-ink-muted">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
-            Built for real estate professionals
+            Built for real estate agents &amp; teams
           </div>
 
           <h1 className="mt-6 text-4xl font-semibold leading-[1.1] tracking-tight text-ink sm:text-5xl lg:text-6xl">
-            Close More Property Deals{" "}
-            <span className="text-primary">Without Losing Leads</span>
+            Never lose another deal to a{" "}
+            <span className="text-primary">slow follow-up</span>
           </h1>
 
           <p className="mt-5 max-w-lg text-lg leading-relaxed text-ink-muted">
-            Arkynex is the all-in-one CRM that helps you manage leads,
-            viewings, properties and deals — powered by AI.
+            Arkynex is the all-in-one CRM for real estate. Capture every lead,
+            track listings, viewings and deals, and let AI tell you exactly who
+            to call next — before they go cold.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button size="lg" asChild>
-              <a href="/signup">
-                Start 14-day free trial
+              <Link href="/signup">
+                Start 15-day free trial
                 <ArrowRight className="h-4 w-4" />
-              </a>
+              </Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <a href="#demo">
+              <a href="#features">
                 <PlayCircle className="h-4 w-4" />
-                Watch demo
+                See how it works
               </a>
             </Button>
           </div>
@@ -54,6 +62,17 @@ export function Hero() {
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-muted">
             {trustItems.map((item) => (
               <span key={item}>{item}</span>
+            ))}
+          </div>
+
+          <div className="mt-10 grid max-w-md grid-cols-3 gap-4 border-t border-line pt-6">
+            {outcomes.map((item) => (
+              <div key={item.label}>
+                <p className="text-2xl font-semibold tracking-tight text-ink">
+                  {item.value}
+                </p>
+                <p className="mt-0.5 text-xs text-ink-muted">{item.label}</p>
+              </div>
             ))}
           </div>
         </motion.div>

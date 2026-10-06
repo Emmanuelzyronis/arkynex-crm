@@ -1,33 +1,56 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Building2, CreditCard, MessageCircle, User } from "lucide-react";
+import { Bell, Building2, CreditCard, Globe, User, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-import { ProfileSection, BusinessSection, BillingSection, NotificationsSection } from "@/components/settings/sections";
-import { WhatsAppSection } from "@/components/settings/whatsapp-section";
+import {
+  ProfileSection,
+  BusinessSection,
+  BillingSection,
+  NotificationsSection,
+  LeadCaptureSection,
+  TeamSection,
+} from "@/components/settings/sections";
 import { cn } from "@/lib/utils";
-import type { Tables } from "@/lib/supabase/types";
+import type { Profile } from "@/lib/db/schema";
+import type { BillingState } from "@/lib/billing/plans";
+import type { TeamMemberWithStats } from "@/lib/db/queries/team";
+import type { Subscription } from "@/lib/db/schema";
+import type { WebhookSummary } from "@/lib/db/queries/subscriptions";
 
-type TabKey = "profile" | "business" | "whatsapp" | "billing" | "notifications";
+type TabKey = "profile" | "business" | "capture" | "team" | "billing" | "notifications";
 
 const tabs: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: "profile", label: "Profile", icon: User },
   { key: "business", label: "Business", icon: Building2 },
-  { key: "whatsapp", label: "WhatsApp", icon: MessageCircle },
+  { key: "capture", label: "Lead capture", icon: Globe },
+  { key: "team", label: "Team", icon: Users },
   { key: "billing", label: "Billing", icon: CreditCard },
   { key: "notifications", label: "Notifications", icon: Bell },
 ];
 
 export function SettingsTabs({
   profile,
+  billing,
+  captureToken,
+  siteUrl,
+  members,
+  routingEnabled,
+  subscription,
+  lastWebhook,
   initialTab,
-  pairingCode,
   userId,
 }: {
-  profile: Tables<"profiles"> | null;
+  profile: Profile | null;
+  billing?: BillingState | null;
+  captureToken?: string;
+  siteUrl?: string;
+  members?: TeamMemberWithStats[];
+  routingEnabled?: boolean;
+  subscription?: Subscription | null;
+  lastWebhook?: WebhookSummary | null;
   initialTab?: string;
-  pairingCode?: string | null;
   userId?: string;
 }) {
   const [active, setActive] = useState<TabKey>((initialTab as TabKey) ?? "profile");
@@ -37,8 +60,6 @@ export function SettingsTabs({
       <nav className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
         {tabs.map(({ key, label, icon: Icon }) => {
           const isActive = active === key;
-          const isWhatsApp = key === "whatsapp";
-          const showDot = isWhatsApp && !profile?.whatsapp_verified_at;
           return (
             <button
               key={key}
@@ -51,9 +72,6 @@ export function SettingsTabs({
             >
               <Icon className="h-[18px] w-[18px]" />
               {label}
-              {showDot && (
-                <span className="ml-auto h-2 w-2 rounded-full bg-status-negotiating" title="Not connected" />
-              )}
             </button>
           );
         })}
@@ -61,12 +79,22 @@ export function SettingsTabs({
 
       <div className="rounded-2xl border border-line bg-card p-5 sm:p-6">
         {active === "profile" && <ProfileSection profile={profile} />}
-        {active === "business" && <BusinessSection />}
-        {active === "whatsapp" && (
-          <WhatsAppSection profile={profile} pairingCode={pairingCode} userId={userId} />
+        {active === "business" && <BusinessSection profile={profile} />}
+        {active === "capture" && (
+          <LeadCaptureSection profile={profile} captureToken={captureToken} siteUrl={siteUrl} />
         )}
-        {active === "billing" && <BillingSection profile={profile} />}
-        {active === "notifications" && <NotificationsSection />}
+        {active === "team" && (
+          <TeamSection members={members ?? []} routingEnabled={routingEnabled ?? false} />
+        )}
+        {active === "billing" && (
+          <BillingSection
+            profile={profile}
+            billing={billing}
+            subscription={subscription}
+            lastWebhook={lastWebhook}
+          />
+        )}
+        {active === "notifications" && <NotificationsSection profile={profile} />}
       </div>
     </div>
   );

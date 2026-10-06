@@ -6,10 +6,10 @@ import { Search } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import type { Lead } from "@/lib/supabase/queries/leads";
+import { formatMoneyCompact } from "@/lib/currency";
+import type { LeadWithAssignee } from "@/lib/db/queries/leads";
 import {
   avatarPalette,
-  formatBudget,
   initials,
   leadStageFilters,
   scoreColor,
@@ -17,17 +17,16 @@ import {
   stageConfig,
 } from "@/lib/mock-leads";
 
-function formatBudgetFromDb(lead: Lead) {
-  const min = lead.budget_min;
-  const max = lead.budget_max;
+function formatBudgetFromDb(lead: LeadWithAssignee) {
+  const min = lead.budgetMin;
+  const max = lead.budgetMax;
   if (!min && !max) return null;
-  const fmt = (n: number) =>
-    n >= 1_000_000_000 ? `₦${(n / 1_000_000_000).toFixed(1)}B` : `₦${Math.round(n / 1_000_000)}M`;
+  const fmt = (n: number) => formatMoneyCompact(n);
   if (min && max && min !== max) return `${fmt(min)}–${fmt(max)}`;
   return fmt(min ?? max ?? 0);
 }
 
-export function LeadsTable({ leads }: { leads: Lead[] }) {
+export function LeadsTable({ leads }: { leads: LeadWithAssignee[] }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
@@ -41,9 +40,9 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
         !filter || filter.value === "all" || filter.stages.includes(lead.stage as never);
       const matchesQuery =
         q === "" ||
-        lead.full_name.toLowerCase().includes(q) ||
+        lead.fullName.toLowerCase().includes(q) ||
         lead.phone.includes(q) ||
-        (lead.location_prefs ?? []).some((area) => area.toLowerCase().includes(q));
+        (lead.locationPrefs ?? []).some((area) => area.toLowerCase().includes(q));
       return matchesStage && matchesQuery;
     });
   }, [leads, query, activeFilter]);
@@ -82,7 +81,7 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
           <span className="col-span-3">Requirement</span>
           <span className="col-span-2">Stage</span>
           <span className="col-span-1">Score</span>
-          <span className="col-span-2">Last Contact</span>
+          <span className="col-span-2">Contact / Owner</span>
         </div>
 
         <ul className="divide-y divide-line">
@@ -101,7 +100,7 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
                 <div className="flex items-center gap-3 sm:col-span-4">
                   <div className="relative shrink-0">
                     <div className={cn("flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold", avatarPalette[i % avatarPalette.length])}>
-                      {initials(lead.full_name)}
+                      {initials(lead.fullName)}
                     </div>
                     {SourceIcon && (
                       <span title={source.label} className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border border-card bg-surface text-ink-muted">
@@ -110,7 +109,7 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-ink">{lead.full_name}</p>
+                    <p className="truncate text-sm font-medium text-ink">{lead.fullName}</p>
                     <p className="truncate text-xs text-ink-muted">{lead.phone}</p>
                   </div>
                 </div>
@@ -118,10 +117,10 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
                 <div className="text-sm sm:col-span-3">
                   <p className="text-ink">
                     {lead.bedrooms ? `${lead.bedrooms} bed ` : ""}
-                    {lead.property_type ?? "Any"}
+                    {lead.propertyType ?? "Any"}
                   </p>
                   <p className="text-xs text-ink-muted">
-                    {[budget, (lead.location_prefs ?? []).join(", ")].filter(Boolean).join(" · ")}
+                    {[budget, (lead.locationPrefs ?? []).join(", ")].filter(Boolean).join(" · ")}
                   </p>
                 </div>
 
@@ -136,9 +135,14 @@ export function LeadsTable({ leads }: { leads: Lead[] }) {
                     {lead.score}
                   </div>
                   <div className="text-sm text-ink-muted sm:col-span-2">
-                    {lead.last_contacted_at
-                      ? new Date(lead.last_contacted_at).toLocaleDateString("en-NG", { month: "short", day: "numeric" })
-                      : "—"}
+                    <p>
+                      {lead.lastContactedAt
+                        ? new Date(lead.lastContactedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                        : "—"}
+                    </p>
+                    {lead.assignedToName && (
+                      <p className="truncate text-xs font-medium text-primary">{lead.assignedToName}</p>
+                    )}
                   </div>
                 </div>
               </li>

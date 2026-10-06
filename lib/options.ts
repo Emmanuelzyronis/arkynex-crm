@@ -1,12 +1,12 @@
 export const operatingAreas = [
-  "Victoria Island",
-  "Lekki Phase 1",
-  "Ikoyi",
-  "Ajah",
-  "Banana Island",
-  "Surulere",
-  "Yaba",
-  "Ikeja",
+  "Downtown",
+  "Riverside",
+  "Chelsea",
+  "Greenwood",
+  "Harbor Island",
+  "Maplewood",
+  "Midtown",
+  "Northgate",
 ];
 
 export const propertyTypeOptions = [
@@ -27,24 +27,24 @@ export const timelineOptions = [
 
 export const leadSourceOptions = [
   { value: "manual", label: "Manual entry" },
-  { value: "whatsapp", label: "WhatsApp" },
   { value: "web_widget", label: "Website widget" },
   { value: "referral", label: "Referral" },
+  { value: "open_house", label: "Open house" },
   { value: "business_card", label: "Business card" },
   { value: "social_dm", label: "Social DM" },
 ];
 
 export const amenityOptions = [
-  "24hr Light",
-  "Swimming Pool",
-  "BQ",
-  "Generator",
-  "Security",
   "Parking",
+  "Swimming Pool",
   "Gym",
   "Elevator",
   "Garden",
-  "CCTV",
+  "Balcony",
+  "Security",
+  "Concierge",
+  "Air Conditioning",
+  "Pet Friendly",
 ];
 
 export const conditionOptions = [

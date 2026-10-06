@@ -8,6 +8,41 @@
       "when": 1791189072513,
       "tag": "0000_dear_moonstone",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791272415951,
+      "tag": "0001_clerk_billing",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791274422377,
+      "tag": "0002_remove_whatsapp",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791275289475,
+      "tag": "0003_tasks_and_capture",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791350000000,
+      "tag": "0004_smart_lists_and_team",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791400000000,
+      "tag": "0005_workspaces_queue_images",
+      "breakpoints": true
     }
   ]
 }

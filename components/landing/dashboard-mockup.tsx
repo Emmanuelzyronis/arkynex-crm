@@ -3,6 +3,9 @@
 import { motion } from "motion/react";
 import { Bell, Search, Sparkles } from "lucide-react";
 
+import { formatMoney, formatMoneyCompact } from "@/lib/currency";
+import { avatarPhoto } from "@/lib/images";
+
 const funnelStages = [
   { label: "New", value: 98, width: "100%", color: "bg-primary/15" },
   { label: "Contacted", value: 76, width: "84%", color: "bg-primary/35" },
@@ -39,7 +42,12 @@ export function DashboardMockup() {
           <div className="flex items-center gap-3 text-ink-muted">
             <Search className="h-4 w-4" />
             <Bell className="h-4 w-4" />
-            <div className="h-7 w-7 rounded-full bg-primary/10" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={avatarPhoto(1, 64)}
+              alt="Account avatar"
+              className="h-7 w-7 rounded-full object-cover"
+            />
           </div>
         </div>
 
@@ -54,7 +62,7 @@ export function DashboardMockup() {
           <div className="rounded-xl border border-line p-3">
             <p className="text-xs text-ink-muted">Revenue (This Month)</p>
             <p className="mt-1 text-xl font-semibold tracking-tight text-ink">
-              ₦12.4M
+              {formatMoneyCompact(412_000)}
             </p>
             <p className="mt-1 text-xs font-medium text-status-closed">
               ↑ 24% vs last month
@@ -88,7 +96,7 @@ export function DashboardMockup() {
           <div className="rounded-xl border border-line p-3">
             <p className="text-xs font-medium text-ink-muted">Revenue Overview</p>
             <p className="mt-1 text-base font-semibold tracking-tight text-ink">
-              ₦12,400,000
+              {formatMoney(412_000)}
             </p>
             <svg viewBox="0 0 200 70" className="mt-3 h-16 w-full" preserveAspectRatio="none">
               <defs>
@@ -129,8 +137,8 @@ export function DashboardMockup() {
           <p className="text-[10px] font-medium uppercase tracking-wide text-ink-muted">
             New Lead
           </p>
-          <p className="mt-1 text-sm font-semibold text-ink">Tunde Adebayo</p>
-          <p className="text-xs text-ink-muted">Budget ₦150M – ₦200M</p>
+          <p className="mt-1 text-sm font-semibold text-ink">Marcus Bennett</p>
+          <p className="text-xs text-ink-muted">Budget $450K – $650K</p>
         </motion.div>
       </motion.div>
 
@@ -146,7 +154,7 @@ export function DashboardMockup() {
             <Sparkles className="h-3 w-3" />
             AI Action
           </div>
-          <p className="mt-1 text-sm font-semibold">Follow up with Tunde</p>
+          <p className="mt-1 text-sm font-semibold">Follow up with Marcus</p>
           <p className="text-xs text-white/70">High priority · Due today</p>
         </motion.div>
       </motion.div>

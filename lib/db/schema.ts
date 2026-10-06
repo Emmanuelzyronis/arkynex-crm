@@ -20,27 +20,60 @@ const updatedAt = () =>
     .defaultNow()
     .$onUpdate(() => new Date());
 
-export const profiles = pgTable("profiles", {
+export const profiles = pgTable(
+  "profiles",
+  {
   id: text("id").primaryKey(),
+  /** Tenant id. Owners point at their own id; team members at their owner's id. */
+  workspaceId: text("workspace_id"),
+  /** owner | admin | agent */
+  role: text("role").notNull().default("owner"),
+  avatarUrl: text("avatar_url"),
   fullName: text("full_name").notNull(),
   phone: text("phone"),
   agencyName: text("agency_name"),
-  timezone: text("timezone").notNull().default("Africa/Lagos"),
+  timezone: text("timezone").notNull().default("UTC"),
   onboardingStep: integer("onboarding_step").notNull().default(0),
   onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
-  whatsappPhone: text("whatsapp_phone"),
-  whatsappVerifiedAt: timestamp("whatsapp_verified_at", { withTimezone: true }),
-  whatsappPairingCode: text("whatsapp_pairing_code"),
-  whatsappPairingExpires: timestamp("whatsapp_pairing_expires", {
-    withTimezone: true,
-  }),
   tier: text("tier").notNull().default("starter"),
   subscriptionStatus: text("subscription_status").notNull().default("trialing"),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
-  paystackCustomerCode: text("paystack_customer_code"),
+  websiteUrl: text("website_url"),
+  leadCaptureToken: text("lead_capture_token").unique(),
+  leadCaptureEnabled: boolean("lead_capture_enabled").notNull().default(true),
+  businessPrefs: jsonb("business_prefs"),
+  goals: jsonb("goals"),
+  notificationPrefs: jsonb("notification_prefs"),
+  leadRoutingEnabled: boolean("lead_routing_enabled").notNull().default(false),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
-});
+  },
+  (table) => [index("profiles_workspace_idx").on(table.workspaceId)],
+);
+
+export const teamMembers = pgTable(
+  "team_members",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    userId: text("user_id"),
+    email: text("email").notNull(),
+    fullName: text("full_name").notNull(),
+    role: text("role").notNull().default("agent"),
+    avatarUrl: text("avatar_url"),
+    status: text("status").notNull().default("active"),
+    invitedAt: timestamp("invited_at", { withTimezone: true }).notNull().defaultNow(),
+    joinedAt: timestamp("joined_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("team_members_owner_email_unique").on(table.ownerId, table.email),
+    index("team_members_owner_idx").on(table.ownerId),
+  ],
+);
 
 export const leads = pgTable(
   "leads",
@@ -71,6 +104,9 @@ export const leads = pgTable(
     rawIntakeText: text("raw_intake_text"),
     embedding: text("embedding"),
     referredByLeadId: uuid("referred_by_lead_id"),
+    assignedToId: uuid("assigned_to_id").references(() => teamMembers.id, {
+      onDelete: "set null",
+    }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -78,6 +114,7 @@ export const leads = pgTable(
     uniqueIndex("leads_agent_phone_unique").on(table.agentId, table.phone),
     index("leads_agent_stage_idx").on(table.agentId, table.stage),
     index("leads_agent_created_idx").on(table.agentId, table.createdAt),
+    index("leads_assigned_idx").on(table.agentId, table.assignedToId),
   ],
 );
 
@@ -91,7 +128,7 @@ export const properties = pgTable(
     title: text("title").notNull(),
     propertyType: text("property_type").notNull(),
     price: doublePrecision("price").notNull(),
-    city: text("city").notNull().default("Lagos"),
+    city: text("city").notNull().default("New York"),
     area: text("area"),
     address: text("address"),
     description: text("description"),
@@ -103,6 +140,7 @@ export const properties = pgTable(
     amenities: text("amenities").array(),
     status: text("status").notNull().default("active"),
     ownership: text("ownership").notNull().default("own"),
+    imageUrl: text("image_url"),
     commissionSplitPct: doublePrecision("commission_split_pct"),
     externalAgentName: text("external_agent_name"),
     externalAgentPhone: text("external_agent_phone"),
@@ -245,8 +283,6 @@ export const communications = pgTable(
     content: text("content"),
     callOutcome: text("call_outcome"),
     durationSeconds: integer("duration_seconds"),
-    waStatus: text("wa_status"),
-    whatsappMessageId: text("whatsapp_message_id"),
     createdAt: createdAt(),
   },
   (table) => [
@@ -277,6 +313,48 @@ export const aiActions = pgTable(
   (table) => [index("ai_actions_agent_created_idx").on(table.agentId, table.createdAt)],
 );
 
+export const tasks = pgTable(
+  "tasks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    agentId: text("agent_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    leadId: uuid("lead_id").references(() => leads.id, { onDelete: "cascade" }),
+    dealId: uuid("deal_id").references(() => deals.id, { onDelete: "set null" }),
+    title: text("title").notNull(),
+    notes: text("notes"),
+    type: text("type").notNull().default("follow_up"),
+    priority: text("priority").notNull().default("normal"),
+    dueAt: timestamp("due_at", { withTimezone: true }).notNull(),
+    completed: boolean("completed").notNull().default(false),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("tasks_agent_due_idx").on(table.agentId, table.dueAt),
+    index("tasks_lead_idx").on(table.leadId),
+  ],
+);
+
+export const smartLists = pgTable(
+  "smart_lists",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    agentId: text("agent_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    icon: text("icon"),
+    filters: jsonb("filters").notNull().default({}),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [index("smart_lists_agent_idx").on(table.agentId, table.sortOrder)],
+);
+
 export const subscriptions = pgTable(
   "subscriptions",
   {
@@ -286,16 +364,16 @@ export const subscriptions = pgTable(
       .references(() => profiles.id, { onDelete: "cascade" }),
     plan: text("plan").notNull(),
     status: text("status").notNull(),
-    paystackSubscriptionCode: text("paystack_subscription_code"),
-    paystackPlanCode: text("paystack_plan_code"),
+    clerkSubscriptionId: text("clerk_subscription_id"),
+    clerkPlanId: text("clerk_plan_id"),
     currentPeriodStart: timestamp("current_period_start", { withTimezone: true }),
     currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (table) => [
-    uniqueIndex("subscriptions_paystack_code_unique").on(
-      table.paystackSubscriptionCode,
+    uniqueIndex("subscriptions_clerk_subscription_unique").on(
+      table.clerkSubscriptionId,
     ),
   ],
 );
@@ -310,6 +388,31 @@ export const webhookLogs = pgTable("webhook_logs", {
   createdAt: createdAt(),
 });
 
+/**
+ * Durable background job queue (cron-drained).
+ *
+ * Vercel Cron triggers `/api/cron/process-jobs`, which claims batches with
+ * `FOR UPDATE SKIP LOCKED`, runs them and retries with backoff. This extends the
+ * deployment beyond "cron only" without adding a broker dependency.
+ */
+export const jobs = pgTable(
+  "jobs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    type: text("type").notNull(),
+    payload: jsonb("payload").notNull().default({}),
+    status: text("status").notNull().default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    maxAttempts: integer("max_attempts").notNull().default(5),
+    runAt: timestamp("run_at", { withTimezone: true }).notNull().defaultNow(),
+    lockedAt: timestamp("locked_at", { withTimezone: true }),
+    lastError: text("last_error"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [index("jobs_status_run_idx").on(table.status, table.runAt)],
+);
+
 export type Profile = typeof profiles.$inferSelect;
 export type Lead = typeof leads.$inferSelect;
 export type Property = typeof properties.$inferSelect;
@@ -321,5 +424,9 @@ export type DealOffer = typeof dealOffers.$inferSelect;
 export type LeadStageHistory = typeof leadStageHistory.$inferSelect;
 export type Communication = typeof communications.$inferSelect;
 export type AiAction = typeof aiActions.$inferSelect;
+export type Task = typeof tasks.$inferSelect;
+export type TeamMember = typeof teamMembers.$inferSelect;
+export type SmartList = typeof smartLists.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type WebhookLog = typeof webhookLogs.$inferSelect;
+export type Job = typeof jobs.$inferSelect;

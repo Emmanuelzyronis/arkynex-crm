@@ -1,13 +1,9 @@
 import { CalendarCheck, Handshake, Users, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-import type { DashboardStats } from "@/lib/supabase/queries/dashboard";
+import type { DashboardStats } from "@/lib/db/queries/dashboard";
+import { formatMoneyCompact } from "@/lib/currency";
 
-function formatNaira(n: number) {
-  if (n === 0) return "₦0";
-  if (n >= 1_000_000_000) return `₦${(n / 1_000_000_000).toFixed(1)}B`;
-  return `₦${(n / 1_000_000).toFixed(1)}M`;
-}
 
 function StatCard({
   label,
@@ -33,7 +29,7 @@ function StatCard({
         </div>
       </div>
       <p className="mt-3 text-2xl font-semibold tracking-tight text-ink">
-        {isRevenue ? formatNaira(value) : value}
+        {isRevenue ? formatMoneyCompact(value) : value}
       </p>
       {delta !== 0 ? (
         <p className={`mt-1 text-xs font-medium ${positive ? "text-status-closed" : "text-status-lost"}`}>

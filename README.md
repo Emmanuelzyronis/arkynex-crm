@@ -1,166 +1,197 @@
 # Arkynex CRM
 
-Real estate CRM built with Next.js 16 / React 19 / Tailwind v4 / Supabase / Recharts.
+Real estate CRM built with **Next.js 16 / React 19 / Tailwind v4**, running on
+**Clerk** (auth + billing + multi-user workspaces) + **Neon Postgres** via
+**Drizzle ORM** (data) + **Vercel Blob** (files) + **Ably** (realtime) +
+**Vercel AI Gateway** (LLM features), deployed on **Vercel**.
 
 ## Quick start
 
 ```bash
 npm install
+cp .env.example .env.local   # fill in the values (see below)
+npx drizzle-kit migrate      # apply schema to Neon
 npm run dev
 ```
 
 Open http://localhost:3000.
 
-## ⚠️ Before you start — required one-time setup
+## Environment
 
-See **`GOOGLE_OAUTH_SETUP.md`** for the complete checklist.
+Copy `.env.example` → `.env.local`. Required groups:
 
-**Critical steps:**
-1. Set your Supabase **Site URL** → `http://localhost:3000`
-2. Add **Redirect URL** → `http://localhost:3000/auth/callback`
-3. Enable **Google provider** in Supabase with your Google Cloud credentials
-4. Your `.env.local` is already populated with the project keys
+| Group | Vars |
+|-------|------|
+| Clerk | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_BILLING_ENABLED` |
+| Neon | `DATABASE_URL`, `DATABASE_URL_UNPOOLED` |
+| Blob | `BLOB_READ_WRITE_TOKEN` (optional `NEXT_PUBLIC_BLOB_BASE_URL`) |
+| Ably | `ABLY_SERVER_KEY`, `NEXT_PUBLIC_ABLY_CLIENT_KEY` |
+| Cron | `CRON_SECRET` |
+| AI | `AI_GATEWAY_API_KEY` (or `OPENAI_API_KEY`), `AI_MODEL` |
+| Email | `RESEND_API_KEY`, `EMAIL_FROM` |
+| SMS | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` |
 
-## Auth flow
+With the Vercel project linked, `vercel env pull .env.local` fetches the Neon,
+Clerk and Blob values automatically.
+
+## Auth flow (Clerk)
 
 | Route | What happens |
-|-------|-------------|
-| `/signup` | Email/password or Google OAuth → email verification → `/onboarding/profile` |
-| `/login` | Sign in → `/dashboard` |
-| `/forgot-password` | Sends reset email |
-| `/auth/callback` | Handles Google OAuth + email confirmation |
-| `/auth/reset-password` | New password after reset link |
-| `/auth/verify-email` | Holding page after email signup |
+|-------|--------------|
+| `/signup` | Clerk `<SignUp/>` → email verification → `/onboarding/profile` |
+| `/login` | Clerk `<SignIn/>` → `/dashboard` |
+| `/onboarding/*` | Profile → business → goals |
 
-Protected routes redirect to `/login` when unauthenticated.  
-Onboarding is enforced by the app layout — incomplete profiles are redirected to the right step.
+Protected routes are guarded by `proxy.ts` (`clerkMiddleware` — Next 16's
+replacement for the deprecated `middleware.ts` convention).
 
-## Data layer
+### Workspaces & multi-user team
+
+Every signed-in user has a personal `profiles` row. Data is scoped to a
+**workspace** (`profiles.workspaceId`):
+
+- Owners are their own workspace (`workspaceId === userId`).
+- When an owner adds a teammate (Settings → Team) and that teammate signs in,
+  `resolveAuthContext()` matches their email to the invitation and links their
+  profile to the owner's workspace, so they see the same leads, deals and
+  pipeline (roles: `owner` / `admin` / `agent`).
+
+`requireUser()` returns the workspace id used to scope all queries/mutations;
+`requireAuthContext()` returns the full context; `requireOwnProfileId()` is
+used for personal profile edits; `requireWorkspaceAdmin()` guards team actions.
+
+## Billing (Clerk Billing + 15-day trial)
+
+Every new account starts a **15-day free trial** (`profiles.trial_ends_at`,
+set on profile creation). `getBillingState()` (`lib/billing/access.ts`) resolves
+trial + subscription state; an expired trial redirects `/dashboard` to
+`/settings?tab=billing`, and the app shell shows a trial banner.
+
+Subscriptions are handled by **Clerk Billing** (Stripe under the hood):
+
+1. Enable Billing at <https://dashboard.clerk.com> → Billing Settings.
+2. Create user Plans with slugs `starter`, `pro`, `agency` (optionally a
+   15-day trial per Plan).
+3. Set `NEXT_PUBLIC_CLERK_BILLING_ENABLED=true`.
+
+Once enabled, `<PricingTable />` in the Billing settings tab renders the Plans
+for checkout, and `has({ plan })` gates access. Until then the tab shows the
+plan comparison with checkout marked "coming soon".
+
+## Features
+
+| Area | What it does |
+|------|--------------|
+| Tasks | Daily follow-up queue at `/tasks` (overdue / today / upcoming / completed); tasks also appear on the dashboard, calendar and each lead. |
+| Action plans | One-click follow-up sequences (`Speed to lead`, `2-week nurture`, `Post-viewing`) from a lead record — each step becomes a task. |
+| Lead capture | A public hosted form at `${NEXT_PUBLIC_SITE_URL}/f/{token}` captures website enquiries, dedupes by phone, scores the lead and creates a speed-to-lead task. Configure it in Settings → Lead capture (copy link, embed iframe, download HTML). |
+| Search | ⌘K / Ctrl-K command palette (`/api/search`) across leads, properties and deals. |
+| Export | CSV downloads at `/api/export/leads` and `/api/export/deals` (agent-scoped). |
+| Smart lists | Saved, live-counted pipeline views on `/leads` — filter builder for stage, score, source, type, timeline, budget, follow-up age and owner. |
+| Team & routing | Team roster + roles in Settings → Team; optional round-robin routing assigns new website leads to the least-loaded active member. |
+| Billing sync | `/api/webhooks/clerk` verifies Clerk (Svix) signatures and mirrors subscription events into `subscriptions` + `profiles`. |
+
+## Data layer (Drizzle + Neon)
 
 ```
-lib/supabase/
- ├─ client.ts          browser (Client Components)
- ├─ server.ts          server (Server Components, Actions)
- ├─ middleware.ts       session refresh
- ├─ types.ts           generated from realestate-crm schema
- ├─ actions/
- │   ├─ auth.ts        loginWithEmail, signupWithEmail, loginWithGoogle, signout
- │   └─ onboarding.ts  saveProfileStep, saveBusinessStep, saveWhatsAppStep, saveGoalsStep
- ├─ queries/
- │   ├─ leads.ts       getLeads, getLead
- │   ├─ properties.ts  getProperties, getProperty, getPhotoUrl, getDocumentUrl
- │   ├─ viewings.ts    getViewings, getViewing
- │   ├─ deals.ts       getDeals, getDeal
- │   ├─ communications.ts  getConversations, getThread
- │   ├─ ai-actions.ts  getAIActions
- │   ├─ dashboard.ts   getAllDashboardData (stats, funnel, revenue, sources, viewings, actions)
- │   └─ reports.ts     getAllReportData (stats, revenue trend, deal stages, viewing outcomes, top properties)
- └─ mutations/
-     ├─ leads.ts       createLead, updateLeadStage (+ history), archiveLead, deleteLead
-     ├─ properties.ts  createProperty, updateProperty, deleteProperty, uploadPropertyPhotos,
-     │                 deletePropertyPhoto, uploadPropertyDocument, deletePropertyDocument
-     ├─ viewings.ts    createViewing, updateViewingStatus
-     ├─ deals.ts       createDeal, updateDealStatus, logOffer, deleteDeal
-     ├─ communications.ts  logNote, logCall, logWhatsApp
-     ├─ ai-actions.ts  completeAction, dismissAction
-     └─ settings.ts    saveProfile, saveWhatsAppSettings
+lib/db/schema.ts          # all tables (camelCase props, snake_case columns)
+lib/db/index.ts           # neon-http Drizzle client
+lib/db/queries/*.ts       # read models (all scoped by agentId)
+lib/db/mutations/*.ts     # server actions (create/update/delete)
+lib/db/migrations/*.sql   # drizzle-kit migrations
 ```
 
-## Storage
+No RLS: every query filters by the workspace `agentId` and every mutation calls
+`requireUser()` (which now resolves the workspace). Reads of the dashboard and
+reports are wrapped in a 60s `unstable_cache` (`lib/cache.ts`, tag-invalidated
+on mutation). A durable `jobs` queue (`lib/queue/*`) adds retries/backoff and is
+drained every minute by `/api/cron/process-jobs`.
 
-Two Supabase Storage buckets (already configured by the migration):
-- `property-photos` — **public**, photos visible without auth
-- `property-documents` — **private**, signed URLs (60min) for title docs etc.
+## Files (Vercel Blob)
 
-Upload path convention: `{agent_id}/{property_id}/{filename}`
+`lib/storage/blob.ts` stores property photos under `properties/{id}/photos/...`
+(public blob URLs) and documents under `properties/{id}/documents/...`.
+Documents are downloaded through the authenticated
+`app/api/documents/[id]/route.ts` proxy, which checks ownership before
+streaming the file — the raw blob URL is never exposed to the client.
 
-## App routes
+## Realtime (Ably)
 
-All inside `app/(app)/` — share a sidebar + topbar via `DashboardShell`.
+`lib/realtime/ably.ts` publishes events; `app/api/realtime/token/route.ts`
+issues scoped tokens to signed-in users. The communications thread and AI-action
+bell subscribe client-side. Publishing is a no-op when `ABLY_SERVER_KEY` is unset.
 
-| Route | What it does |
-|-------|-------------|
-| `/dashboard` | Stats, funnel, revenue chart, lead sources, viewings, AI actions (all real data) |
-| `/leads` | Searchable list; click row → `/leads/:id` |
-| `/leads/new` | Create lead form → Supabase insert |
-| `/leads/:id` | Detail: info, stage mover (+ history), archive/delete |
-| `/properties` | Grid with real photos; click card → `/properties/:id` |
-| `/properties/new` | Create property form → Supabase insert |
-| `/properties/:id` | Detail: inline edit, photo upload/delete, document upload/download/delete |
-| `/viewings` | Agenda grouped Today/Tomorrow/This Week/Past; mark attended/no-show/cancelled inline |
-| `/viewings/new` | Schedule form; lead + property from DB |
-| `/deals` | Kanban board with move/delete actions |
-| `/deals/new` | Create deal form; lead + property from DB |
-| `/communications` | Conversation list + compose note/WhatsApp; thread shows after page reload |
-| `/ai-actions` | Priority-grouped actions; complete/dismiss via Server Actions |
-| `/reports` | Stats, 12-month revenue, deal stages, viewing outcomes, top properties (all real data) |
-| `/calendar` | Month grid; navigable via `?year=&month=` URL params; viewings from DB |
-| `/settings` | Profile (saves to DB), WhatsApp (saves to DB), billing (UI), notifications (UI) |
-| `/help` | Category cards, searchable FAQ |
+## AI (real LLM)
 
-## Deploying
+`lib/ai/llm.ts` is a dependency-free OpenAI-compatible client that calls the
+**Vercel AI Gateway** (`AI_GATEWAY_API_KEY`) or OpenAI directly
+(`OPENAI_API_KEY`). It powers:
 
-1. Set `NEXT_PUBLIC_SITE_URL` in your hosting provider's env vars to your production URL
-2. Add `https://yourdomain.com/auth/callback` to Supabase Redirect URLs
-3. Add `https://yourdomain.com/auth/callback` to Google Cloud Console authorized redirect URIs
-4. `npm run build` — all pages are either statically generated or server-rendered, no special config needed
+- **AI Actions** — the deterministic heuristics in `lib/ai/generate-actions.ts`
+  still decide *which* actions matter (auditable), then the LLM rewrites each
+  card's title/body and drafts the suggested message (`personalizeActions`).
+- **Draft with AI** — a button in the communications thread (`draftLeadMessage`)
+  drafts the next follow-up from the lead's recent thread.
 
-## What's new in this pass
+With no key configured, every model call returns `null` and the app falls back to
+the pure heuristics — no hard dependency, no runtime errors.
 
-### WhatsApp — pairing-code approach (no Meta dev account needed per agent)
-- `lib/supabase/mutations/whatsapp.ts` — generatePairingCode, verifyPairingCode, disconnectWhatsApp
-- `app/api/webhooks/whatsapp/route.ts` — Meta webhook receiver: handles pairing codes,
-  routes inbound messages to the right agent's lead, logs unmatched numbers
-- `components/settings/whatsapp-section.tsx` — full pairing UI with live countdown +
-  auto-polling (no manual refresh needed once connected)
-- See `WHATSAPP_SETUP.md` for the complete Meta Cloud API + pairing flow guide
+## Email & SMS delivery
 
-### Paystack billing
-- `app/api/webhooks/paystack/route.ts` — handles charge.success, subscription.create,
-  subscription.disable, invoice.payment_failed
-- `app/api/billing/paystack-callback/route.ts` — verifies payment, saves customer code
-- `lib/supabase/mutations/billing.ts` — initializePaystackPayment, cancelPaystackSubscription
-- Billing tab in Settings now has real "Subscribe" buttons per plan
+`lib/comms/delivery.ts` sends real messages over `fetch` (no SDKs): **Resend**
+for email and **Twilio** for SMS. In the communications thread you can switch the
+composer between Note / Email / SMS; outbound messages are delivered through the
+provider *and* logged on the thread (with `lastContactedAt` updated). When a
+provider isn't configured the message is still logged and tagged
+"delivery provider not configured".
 
-### Supabase Realtime
-- `components/communications/realtime-thread.tsx` — live message updates via
-  `postgres_changes` subscription (no polling, no manual refresh)
-- `components/dashboard/live-action-bell.tsx` — topbar bell updates live as new
-  AI actions are generated or completed
+## Webhooks & cron (Vercel route handlers)
 
-### Mobile + error handling
-- `components/dashboard/mobile-tab-bar.tsx` — bottom tab bar (Home/Leads/Properties/
-  Viewings/Deals) shown below `lg`, alongside the existing slide-over sidebar drawer
-- `app/(app)/loading.tsx` + 12 per-route `loading.tsx` files — skeleton loaders
-  matching each page's real layout (`components/ui/skeleton.tsx`)
-- `app/(app)/error.tsx` — catches Server Component errors with retry
-- `app/not-found.tsx` + `app/(app)/not-found.tsx` — branded 404s
+| Route | Purpose |
+|-------|---------|
+| `/api/documents/[id]` | Authenticated document download proxy |
+| `/api/leads/capture` | Public lead-capture endpoint (token-authenticated, CORS + rate-limited) |
+| `/api/search` | Signed-in cross-entity search for the ⌘K palette |
+| `/api/export/[entity]` | CSV export for `leads` / `deals` |
+| `/api/webhooks/clerk` | Clerk Billing webhook (signature-verified) |
+| `/api/cron/process-jobs` | Drains the durable background job queue (every minute) |
+| `/api/cron/generate-ai-actions` | Nightly AI task generation (fans out to the queue) |
+| `/api/cron/score-leads` | Recompute lead scores |
+| `/api/cron/stale-lead-tasks` | Daily keep-in-touch tasks for quiet leads |
 
-### Lead edit + AI/scoring Edge Functions
-- `/leads/:id/edit` — full edit form, pre-filled from DB
-- `supabase/functions/generate-ai-actions/` — nightly cron generates actions from
-  stale leads, upcoming/past viewings, stalled deals, new leads
-- `supabase/functions/score-lead/` — real-time 0-100 scoring on every lead change
-  (completeness, timeline, budget, source, stage, recency)
-- See `EDGE_FUNCTIONS_SETUP.md` for deployment + cron scheduling
+Cron schedules live in `vercel.json`. Protect them by setting `CRON_SECRET`
+(Vercel sends it as a bearer token).
 
-## Required env vars for this pass
+## Testing
 
-```env
-# WhatsApp
-WHATSAPP_APP_SECRET=
-WHATSAPP_PHONE_NUMBER_ID=
-WHATSAPP_ACCESS_TOKEN=
-WHATSAPP_WEBHOOK_VERIFY_TOKEN=
-NEXT_PUBLIC_PLATFORM_WA_NUMBER=
-
-# Paystack
-PAYSTACK_SECRET_KEY=
-PAYSTACK_PUBLIC_KEY=
-NEXT_PUBLIC_PAYSTACK_PLAN_STARTER=
-NEXT_PUBLIC_PAYSTACK_PLAN_PRO=
-NEXT_PUBLIC_PAYSTACK_PLAN_AGENCY=
-
-# Required for both webhooks + Edge Functions
-SUPABASE_SERVICE_ROLE_KEY=
+```bash
+npm test        # tsc -p tsconfig.test.json && node --test .test-dist/tests/*.test.js
+npm run typecheck
 ```
+
+`tests/` holds dependency-free unit tests (Node's built-in test runner) for the
+scoring heuristics, currency formatting, action plans, image helpers and billing
+plans. `.github/workflows/ci.yml` runs them on every push/PR.
+
+## Operations notes
+
+- **Database region** — Neon is provisioned in a single region via the Vercel
+  integration. To add read replicas / move regions, use the Neon dashboard
+  (Project → Branches → Read replicas) or `neonctl`; then point
+  `DATABASE_URL_UNPOOLED`/replica URLs at the new endpoint. No app change needed.
+- **Custom domain** — add the domain in Vercel (Project → Settings → Domains),
+  point DNS, and set `NEXT_PUBLIC_SITE_URL` to it so Clerk redirects and
+  lead-capture links use the branded host.
+
+## Deploy (Vercel)
+
+```bash
+vercel link --project arkynex-crm
+vercel integration add neon --name arkynex-crm     # DATABASE_URL etc.
+vercel integration add clerk --name arkynex-crm    # Clerk keys
+vercel integration add blob --name arkynex-crm     # BLOB_READ_WRITE_TOKEN
+vercel --prod
+```
+
+Add the Ably vars with `vercel env add`, then apply migrations to Neon before
+the first deploy.

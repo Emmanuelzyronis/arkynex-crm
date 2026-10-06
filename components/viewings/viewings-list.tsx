@@ -5,7 +5,7 @@ import { Building2, Search, Star } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import type { ViewingWithDetails } from "@/lib/supabase/queries/viewings";
+import type { ViewingWithDetails } from "@/lib/db/queries/viewings";
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   scheduled: { label: "Scheduled", color: "#3B82F6" },
@@ -37,7 +37,7 @@ function groupViewings(viewings: ViewingWithDetails[]) {
   };
 
   for (const v of viewings) {
-    const d = new Date(v.scheduled_at);
+    const d = new Date(v.scheduledAt);
     if (d.toDateString() === now.toDateString()) groups["Today"].push(v);
     else if (d.toDateString() === tomorrow.toDateString()) groups["Tomorrow"].push(v);
     else if (d > now && d <= nextWeekEnd) groups["This Week"].push(v);
@@ -47,12 +47,12 @@ function groupViewings(viewings: ViewingWithDetails[]) {
   return groups;
 }
 
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("en-NG", { hour: "numeric", minute: "2-digit" });
+function formatTime(iso: string | Date) {
+  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-NG", { month: "short", day: "numeric" });
+function formatDate(iso: string | Date) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 function StarRating({ rating }: { rating: number }) {
@@ -79,8 +79,8 @@ export function ViewingsList({
     const q = query.trim().toLowerCase();
     return viewings.filter((v) => {
       const matchesStatus = statusFilter === "all" || v.status === statusFilter;
-      const leadName = (v.leads as { full_name: string } | null)?.full_name?.toLowerCase() ?? "";
-      const propertyTitle = (v.properties as { title: string } | null)?.title?.toLowerCase() ?? "";
+      const leadName = (v.lead as { fullName: string } | null)?.fullName?.toLowerCase() ?? "";
+      const propertyTitle = (v.property as { title: string } | null)?.title?.toLowerCase() ?? "";
       const matchesQuery = q === "" || leadName.includes(q) || propertyTitle.includes(q);
       return matchesStatus && matchesQuery;
     });
@@ -128,16 +128,16 @@ export function ViewingsList({
                 <ul className="mt-3 divide-y divide-line rounded-2xl border border-line bg-card">
                   {items.map((viewing) => {
                     const cfg = statusConfig[viewing.status] ?? { label: viewing.status, color: "#64748B" };
-                    const lead = viewing.leads as { full_name: string; phone: string } | null;
-                    const property = viewing.properties as { title: string; area: string | null } | null;
+                    const lead = viewing.lead as { fullName: string; phone: string } | null;
+                    const property = viewing.property as { title: string; area: string | null } | null;
 
                     return (
                       <li key={viewing.id} className="flex flex-col gap-3 px-5 py-4 sm:grid sm:grid-cols-12 sm:items-center sm:gap-4">
                         {/* Time */}
                         <div className="flex flex-col sm:col-span-2">
-                          <p className="text-sm font-semibold text-ink">{formatTime(viewing.scheduled_at)}</p>
+                          <p className="text-sm font-semibold text-ink">{formatTime(viewing.scheduledAt)}</p>
                           {group !== "Today" && group !== "Tomorrow" && (
-                            <p className="text-xs text-ink-muted">{formatDate(viewing.scheduled_at)}</p>
+                            <p className="text-xs text-ink-muted">{formatDate(viewing.scheduledAt)}</p>
                           )}
                         </div>
 
@@ -155,10 +155,10 @@ export function ViewingsList({
                         {/* Lead */}
                         <div className="flex items-center gap-2 sm:col-span-3">
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                            {(lead?.full_name ?? "?").charAt(0)}
+                            {(lead?.fullName ?? "?").charAt(0)}
                           </div>
                           <div className="min-w-0">
-                            <p className="truncate text-sm text-ink">{lead?.full_name ?? "Lead"}</p>
+                            <p className="truncate text-sm text-ink">{lead?.fullName ?? "Lead"}</p>
                             <p className="truncate text-xs text-ink-muted">{lead?.phone ?? ""}</p>
                           </div>
                         </div>
@@ -172,9 +172,9 @@ export function ViewingsList({
                         </div>
 
                         {/* Notes */}
-                        {viewing.agent_notes && (
+                        {viewing.agentNotes && (
                           <div className="rounded-lg bg-surface px-3 py-2 text-xs text-ink-muted sm:col-span-12">
-                            {viewing.agent_notes}
+                            {viewing.agentNotes}
                           </div>
                         )}
 

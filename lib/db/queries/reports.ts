@@ -7,6 +7,7 @@ import {
   properties,
 } from "@/lib/db/schema";
 import { eq, and, gte, desc, sql } from "drizzle-orm";
+import { CACHE_TAGS, cached } from "@/lib/cache";
 
 // --- Types ---
 
@@ -212,7 +213,7 @@ export async function getReportTopProperties(
   }));
 }
 
-export async function getAllReportData(agentId: string) {
+async function getAllReportDataUncached(agentId: string) {
   const [stats, revenue, dealStages, viewingOutcomes, topProperties] =
     await Promise.all([
       getReportStats(agentId),
@@ -224,3 +225,10 @@ export async function getAllReportData(agentId: string) {
 
   return { stats, revenue, dealStages, viewingOutcomes, topProperties };
 }
+
+/** Cached reports read models (60s TTL, purged via the `reports` tag). */
+export const getAllReportData = cached(
+  getAllReportDataUncached,
+  ["report-data"],
+  { tags: [CACHE_TAGS.reports] },
+);

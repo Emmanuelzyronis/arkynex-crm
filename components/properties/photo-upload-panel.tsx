@@ -3,18 +3,17 @@
 import { useRef, useState } from "react";
 import { Loader2, Trash2, Upload } from "lucide-react";
 
-import { uploadPropertyPhotos, deletePropertyPhoto } from "@/lib/supabase/mutations/properties";
+import { uploadPropertyPhotos, deletePropertyPhoto } from "@/lib/db/mutations/properties";
 import { Button } from "@/components/ui/button";
-import type { PropertyPhoto } from "@/lib/supabase/queries/properties";
+import type { PropertyPhoto } from "@/lib/db/queries/properties";
+import { getPublicObjectUrl } from "@/lib/storage/public-url";
 
 export function PhotoUploadPanel({
   propertyId,
   photos,
-  getPhotoUrl,
 }: {
   propertyId: string;
   photos: PropertyPhoto[];
-  getPhotoUrl: (path: string) => string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -79,22 +78,22 @@ export function PhotoUploadPanel({
       ) : (
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {photos
-            .sort((a, b) => a.sort_order - b.sort_order)
+            .sort((a, b) => a.sortOrder - b.sortOrder)
             .map((photo) => (
               <div key={photo.id} className="group relative aspect-square overflow-hidden rounded-xl border border-line">
                 <img
-                  src={getPhotoUrl(photo.storage_path)}
+                  src={getPublicObjectUrl(photo.storagePath)}
                   alt=""
                   className="h-full w-full object-cover"
                 />
-                {photo.is_primary && (
+                {photo.isPrimary && (
                   <span className="absolute left-2 top-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-medium text-white">
                     Primary
                   </span>
                 )}
                 <form className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100">
                   <input type="hidden" name="photoId" value={photo.id} />
-                  <input type="hidden" name="storagePath" value={photo.storage_path} />
+                  <input type="hidden" name="storagePath" value={photo.storagePath} />
                   <input type="hidden" name="propertyId" value={propertyId} />
                   <button
                     type="submit"

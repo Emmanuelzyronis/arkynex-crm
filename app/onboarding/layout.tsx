@@ -1,27 +1,22 @@
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
 import { OnboardingShell } from "@/components/onboarding/onboarding-shell";
+import { requireAuthContext } from "@/lib/auth/user";
+import { getProfile } from "@/lib/db/queries/profiles";
 
 export default async function OnboardingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const context = await requireAuthContext();
 
-  // Not authenticated at all → go sign up
-  if (!user) redirect("/signup");
+  // Teammates join an onboarded workspace and never run onboarding.
+  if (context.role !== "owner") redirect("/dashboard");
 
-  // Already completed onboarding → go to dashboard
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("onboarding_step, onboarded_at")
-    .eq("id", user.id)
-    .single();
+  const profile = await getProfile(context.workspaceId);
 
-  if (profile?.onboarded_at) redirect("/dashboard");
+  if (profile?.onboardedAt) redirect("/dashboard");
 
   return <OnboardingShell>{children}</OnboardingShell>;
 }

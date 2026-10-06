@@ -1,37 +1,35 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Mail, MessageCircle, Phone, Send, StickyNote, MessageSquare } from "lucide-react";
+import { Loader2, Mail, Phone, Send, Sparkles, StickyNote, MessageSquare } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-import { createClient } from "@/lib/supabase/client";
-import { logNote, logWhatsApp } from "@/lib/supabase/mutations/communications";
+import Ably from "ably";
+import {
+  draftLeadMessage,
+  logNote,
+  sendEmailToLead,
+  sendSmsToLead,
+} from "@/lib/db/mutations/communications";
 import { Input } from "@/components/ui/input";
-import type { CommunicationRow } from "@/lib/supabase/queries/communications";
+import type { Communication } from "@/lib/db/queries/communications";
 
 const CHANNEL_ICON: Record<string, LucideIcon> = {
-  whatsapp: MessageCircle,
   call: Phone,
   email: Mail,
   sms: MessageSquare,
   note: StickyNote,
 };
 
-const STATUS_COLOR: Record<string, string> = {
-  read: "text-primary",
-  delivered: "text-ink-muted",
-  sent: "text-ink-muted/60",
-  failed: "text-status-lost",
-};
 
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("en-NG", {
+function formatTime(iso: string | Date) {
+  return new Date(iso).toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
   });
 }
 
-function MessageBubble({ msg }: { msg: CommunicationRow }) {
+function MessageBubble({ msg }: { msg: Communication }) {
   const isOutbound = msg.direction === "outbound";
 
   if (msg.channel === "note") {
@@ -42,7 +40,7 @@ function MessageBubble({ msg }: { msg: CommunicationRow }) {
           <p className="text-xs font-medium text-primary">Note</p>
           <p className="mt-0.5 text-sm text-ink">{msg.content}</p>
         </div>
-        <span className="shrink-0 text-[10px] text-ink-muted">{formatTime(msg.created_at)}</span>
+        <span className="shrink-0 text-[10px] text-ink-muted">{formatTime(msg.createdAt)}</span>
       </div>
     );
   }
@@ -53,15 +51,15 @@ function MessageBubble({ msg }: { msg: CommunicationRow }) {
         <Phone className="h-4 w-4 shrink-0 text-ink-muted" />
         <div className="flex-1 text-sm">
           <span className="text-ink">{isOutbound ? "Outbound call" : "Inbound call"}</span>
-          {msg.call_outcome && (
-            <span className="text-ink-muted"> · {msg.call_outcome.replace("_", " ")}</span>
+          {msg.callOutcome && (
+            <span className="text-ink-muted"> · {msg.callOutcome.replace("_", " ")}</span>
           )}
-          {msg.duration_seconds ? (
-            <span className="text-ink-muted"> · {msg.duration_seconds}s</span>
+          {msg.durationSeconds ? (
+            <span className="text-ink-muted"> · {msg.durationSeconds}s</span>
           ) : null}
           {msg.content && <p className="mt-0.5 text-xs text-ink-muted">{msg.content}</p>}
         </div>
-        <span className="shrink-0 text-[10px] text-ink-muted">{formatTime(msg.created_at)}</span>
+        <span className="shrink-0 text-[10px] text-ink-muted">{formatTime(msg.createdAt)}</span>
       </div>
     );
   }
@@ -76,12 +74,7 @@ function MessageBubble({ msg }: { msg: CommunicationRow }) {
         {msg.content}
       </div>
       <div className="mt-1 flex items-center gap-1 text-[10px] text-ink-muted">
-        {formatTime(msg.created_at)}
-        {isOutbound && msg.wa_status && (
-          <span className={STATUS_COLOR[msg.wa_status] ?? "text-ink-muted"}>
-            · {msg.wa_status}
-          </span>
-        )}
+        {formatTime(msg.createdAt)}
       </div>
     </div>
   );
@@ -96,43 +89,89 @@ export function RealtimeThread({
   leadId: string;
   leadName: string;
   leadPhone: string;
-  initialMessages: CommunicationRow[];
+  initialMessages: Communication[];
 }) {
-  const [messages, setMessages] = useState<CommunicationRow[]>(initialMessages);
-  const [noteText, setNoteText] = useState("");
-  const [waText, setWaText] = useState("");
+  const [messages, setMessages] = useState<Communication[]>(initialMessages);
+  const [channel, setChannel] = useState<"note" | "email" | "sms">("note");
+  const [text, setText] = useState("");
+  const [subject, setSubject] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  async function handleSend() {
+    if (!text.trim() || busy) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      const fd = new FormData();
+      fd.set("leadId", leadId);
+      fd.set("content", text.trim());
+
+      if (channel === "note") {
+        await logNote(fd);
+        setNotice("Note saved.");
+      } else {
+        if (channel === "email") fd.set("subject", subject.trim() || "Following up");
+        const result =
+          channel === "email" ? await sendEmailToLead(fd) : await sendSmsToLead(fd);
+        if (result.delivered) {
+          setNotice(channel === "email" ? "Email sent." : "SMS sent.");
+        } else if (result.error === "not_configured") {
+          setNotice("Logged — delivery provider not configured.");
+        } else {
+          setNotice(`Logged — delivery failed (${result.error}).`);
+        }
+      }
+      setText("");
+      setSubject("");
+    } catch {
+      setNotice("Something went wrong. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDraft() {
+    if (busy) return;
+    setBusy(true);
+    setNotice("Drafting…");
+    try {
+      const res = await draftLeadMessage(leadId);
+      if (res.ok && res.draft) {
+        setText(res.draft);
+        setNotice("Draft ready — review and send.");
+      } else if (res.error === "llm_not_configured") {
+        setNotice("AI drafting is not configured.");
+      } else {
+        setNotice("Could not draft a reply right now.");
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
 
   // Scroll to bottom when messages update
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Supabase Realtime subscription
+  // Ably realtime subscription (no-op until ABLY_SERVER_KEY is configured)
   useEffect(() => {
-    const supabase = createClient();
+    const client = new Ably.Realtime({ authUrl: "/api/realtime/token" });
+    const channel = client.channels.get(`communications:${leadId}`);
 
-    const channel = supabase
-      .channel(`communications:lead_id=eq.${leadId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "communications",
-          filter: `lead_id=eq.${leadId}`,
-        },
-        (payload) => {
-          setMessages((prev) => {
-            // Avoid duplicates
-            if (prev.some((m) => m.id === payload.new.id)) return prev;
-            return [...prev, payload.new as CommunicationRow];
-          });
-        },
-      )
-      .subscribe();
+    const handler = (message: Ably.Message) => {
+      const row = message.data as Communication;
+      setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, row]));
+    };
 
-    return () => { supabase.removeChannel(channel); };
+    channel.subscribe("communication", handler);
+
+    return () => {
+      channel.unsubscribe("communication", handler);
+      client.close();
+    };
   }, [leadId]);
 
   return (
@@ -156,7 +195,7 @@ export function RealtimeThread({
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
         {messages.length === 0 ? (
           <p className="text-center text-sm text-ink-muted">
-            No messages yet. Log a note or send a WhatsApp below.
+            No messages yet. Log a note below.
           </p>
         ) : (
           messages.map((msg) => <MessageBubble key={msg.id} msg={msg} />)
@@ -166,57 +205,79 @@ export function RealtimeThread({
 
       {/* Compose */}
       <div className="space-y-2 border-t border-line p-4">
-        {/* Note */}
-        <form className="flex gap-2">
-          <input type="hidden" name="leadId" value={leadId} />
-          <Input
-            name="content"
-            value={noteText}
-            onChange={(e) => setNoteText(e.target.value)}
-            placeholder="Log a note..."
-            className="h-9 flex-1 text-sm"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                e.currentTarget.form?.requestSubmit();
-              }
-            }}
-          />
+        <div className="flex items-center gap-1">
+          {(["note", "email", "sms"] as const).map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => { setChannel(c); setNotice(null); }}
+              className={`rounded-full px-3 py-1 text-xs font-medium capitalize transition-colors ${
+                channel === c
+                  ? "bg-primary/10 text-primary"
+                  : "text-ink-muted hover:bg-surface hover:text-ink"
+              }`}
+            >
+              {c === "sms" ? "SMS" : c}
+            </button>
+          ))}
           <button
-            type="submit"
-            formAction={async (fd) => { await logNote(fd); setNoteText(""); }}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface text-ink-muted transition-colors hover:bg-primary/10 hover:text-primary"
-            title="Save note"
+            type="button"
+            onClick={handleDraft}
+            disabled={busy}
+            className="ml-auto flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-50"
+            title="Draft a follow-up with AI"
           >
-            <StickyNote className="h-4 w-4" />
+            <Sparkles className="h-3.5 w-3.5" />
+            Draft with AI
           </button>
-        </form>
+        </div>
 
-        {/* WhatsApp */}
-        <form className="flex gap-2">
-          <input type="hidden" name="leadId" value={leadId} />
+        {channel === "email" && (
           <Input
-            name="content"
-            value={waText}
-            onChange={(e) => setWaText(e.target.value)}
-            placeholder="Send WhatsApp message..."
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            placeholder="Subject"
+            className="h-9 text-sm"
+          />
+        )}
+
+        <div className="flex gap-2">
+          <Input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={
+              channel === "note"
+                ? "Log a note..."
+                : channel === "email"
+                  ? "Write an email..."
+                  : "Write an SMS..."
+            }
             className="h-9 flex-1 text-sm"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                e.currentTarget.form?.requestSubmit();
+                void handleSend();
               }
             }}
           />
           <button
-            type="submit"
-            formAction={async (fd) => { await logWhatsApp(fd); setWaText(""); }}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white transition-colors hover:bg-primary-hover"
-            title="Send WhatsApp"
+            type="button"
+            onClick={() => void handleSend()}
+            disabled={busy || !text.trim()}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface text-ink-muted transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+            title={channel === "note" ? "Save note" : `Send ${channel}`}
           >
-            <Send className="h-4 w-4" />
+            {busy ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : channel === "note" ? (
+              <StickyNote className="h-4 w-4" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </button>
-        </form>
+        </div>
+
+        {notice && <p className="text-[11px] text-ink-muted">{notice}</p>}
       </div>
     </div>
   );

@@ -2,12 +2,9 @@
 
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-import type { ReportDealStage } from "@/lib/supabase/queries/reports";
+import type { ReportDealStage } from "@/lib/db/queries/reports";
+import { formatMoneyCompact } from "@/lib/currency";
 
-function formatCurrency(value: number) {
-  if (value >= 1_000_000_000) return `₦${(value / 1_000_000_000).toFixed(1)}B`;
-  return `₦${(value / 1_000_000).toFixed(0)}M`;
-}
 
 export function DealStageChart({ data }: { data: ReportDealStage[] }) {
   const isEmpty = data.length === 0;
@@ -25,10 +22,10 @@ export function DealStageChart({ data }: { data: ReportDealStage[] }) {
         <div className="mt-4 h-64">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} layout="vertical" margin={{ left: 0, right: 16, top: 4, bottom: 4 }}>
-              <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: "#6B7280", fontSize: 12 }} tickFormatter={formatCurrency} />
+              <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: "#6B7280", fontSize: 12 }} tickFormatter={formatMoneyCompact} />
               <YAxis type="category" dataKey="stage" axisLine={false} tickLine={false} width={120} tick={{ fill: "#374151", fontSize: 12 }} />
               <Tooltip
-                formatter={(value: number) => [formatCurrency(value), "Value"]}
+                formatter={(value: number) => [formatMoneyCompact(value), "Value"]}
                 contentStyle={{ borderRadius: 12, border: "1px solid #E5E7EB", fontSize: 12, boxShadow: "0 4px 12px rgba(17,24,39,0.06)" }}
               />
               <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={18}>

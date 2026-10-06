@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Settings,
   Sparkles,
+  SquareCheckBig,
   Users,
   X,
 } from "lucide-react";
@@ -30,6 +31,7 @@ const navItems: NavItem[] = [
   { label: "Viewings", href: "/viewings", icon: CalendarCheck },
   { label: "Deals", href: "/deals", icon: Handshake },
   { label: "Communications", href: "/communications", icon: MessageSquare },
+  { label: "Tasks", href: "/tasks", icon: SquareCheckBig },
   { label: "AI Actions", href: "/ai-actions", icon: Sparkles },
   { label: "Reports", href: "/reports", icon: BarChart3 },
   { label: "Calendar", href: "/calendar", icon: Calendar },

@@ -8,6 +8,8 @@ import { db } from "@/lib/db";
 import { leads, leadStageHistory } from "@/lib/db/schema";
 import type { Lead } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth/user";
+import { scoreLead } from "@/lib/ai/score-lead";
+import { revalidateDashboard } from "@/lib/cache";
 
 type LeadInsert = typeof leads.$inferInsert;
 
@@ -45,10 +47,13 @@ export async function createLead(formData: FormData) {
     score: 0,
   };
 
+  insert.score = scoreLead(insert);
+
   try {
     const [lead] = await db.insert(leads).values(insert).returning({ id: leads.id });
 
     revalidatePath("/leads");
+    revalidateDashboard();
     redirect(`/leads/${lead.id}`);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
@@ -68,9 +73,9 @@ export async function updateLeadStage(formData: FormData) {
   const notes = String(formData.get("notes") ?? "").trim() || null;
 
   const [current] = await db
-    .select({ stage: leads.stage })
+    .select()
     .from(leads)
-    .where(eq(leads.id, leadId))
+    .where(and(eq(leads.id, leadId), eq(leads.agentId, userId)))
     .limit(1);
 
   if (!current) redirect(`/leads/${leadId}?error=Lead+not+found`);
@@ -86,8 +91,12 @@ export async function updateLeadStage(formData: FormData) {
 
   await db
     .update(leads)
-    .set({ stage: toStage, stageEnteredAt: new Date() })
-    .where(eq(leads.id, leadId));
+    .set({
+      stage: toStage,
+      stageEnteredAt: new Date(),
+      score: scoreLead({ ...current, stage: toStage }),
+    })
+    .where(and(eq(leads.id, leadId), eq(leads.agentId, userId)));
 
   revalidatePath(`/leads/${leadId}`);
   revalidatePath("/leads");
@@ -98,12 +107,12 @@ export async function updateLeadStage(formData: FormData) {
  * Used with .bind(null, leadId) so formData arrives as the second arg (ignored).
  */
 export async function archiveLead(leadId: string, _formData?: FormData) {
-  await requireUser();
+  const userId = await requireUser();
 
   await db
     .update(leads)
     .set({ archived: true })
-    .where(eq(leads.id, leadId));
+    .where(and(eq(leads.id, leadId), eq(leads.agentId, userId)));
 
   revalidatePath("/leads");
   redirect("/leads");
@@ -111,10 +120,10 @@ export async function archiveLead(leadId: string, _formData?: FormData) {
 
 /** Hard delete a lead. */
 export async function deleteLead(formData: FormData) {
-  await requireUser();
+  const userId = await requireUser();
   const leadId = String(formData.get("leadId") ?? "");
 
-  await db.delete(leads).where(eq(leads.id, leadId));
+  await db.delete(leads).where(and(eq(leads.id, leadId), eq(leads.agentId, userId)));
 
   revalidatePath("/leads");
   redirect("/leads");

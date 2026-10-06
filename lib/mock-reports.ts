@@ -1,6 +1,6 @@
 import { mockProperties } from "@/lib/mock-properties";
 
-// 12-month trend ending at the same ₦12.4M shown on the dashboard's "This Month".
+// 12-month trend ending at the same $412K shown on the dashboard's "This Month".
 export const revenueTrend: { month: string; revenue: number }[] = [
   { month: "Jun", revenue: 6_500_000 },
   { month: "Jul", revenue: 7_200_000 },

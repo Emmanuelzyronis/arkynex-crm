@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Arkynex — Close more property deals without losing leads",
   description:
-    "Arkynex is the all-in-one CRM for real estate agents. Manage leads, viewings, properties, WhatsApp conversations and deals in one place — powered by AI.",
+    "Arkynex is the all-in-one CRM for real estate agents. Manage leads, viewings, listings, conversations and deals in one place — powered by AI.",
 };
 
 export default function RootLayout({

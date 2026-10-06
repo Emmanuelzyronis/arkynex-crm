@@ -1,29 +1,27 @@
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
-import { getAllReportData } from "@/lib/supabase/queries/reports";
+import { getAllReportData } from "@/lib/db/queries/reports";
 import { LeadFunnel } from "@/components/dashboard/lead-funnel";
 import { LeadSources } from "@/components/dashboard/lead-sources";
-import { getLeadFunnel, getLeadSources } from "@/lib/supabase/queries/dashboard";
+import { getLeadFunnel, getLeadSources } from "@/lib/db/queries/dashboard";
 import { ReportStatsSection } from "@/components/reports/report-stats";
 import { RevenueTrendChart } from "@/components/reports/revenue-trend-chart";
 import { DealStageChart } from "@/components/reports/deal-stage-chart";
 import { ViewingOutcomes } from "@/components/reports/viewing-outcomes";
 import { TopPropertiesTable } from "@/components/reports/top-properties-table";
+import { requireUser } from "@/lib/auth/user";
 
 export default async function ReportsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const userId = await requireUser();
 
   const [
     { stats, revenue, dealStages, viewingOutcomes, topProperties },
     funnel,
     sources,
   ] = await Promise.all([
-    getAllReportData(supabase),
-    getLeadFunnel(supabase),
-    getLeadSources(supabase),
+    getAllReportData(userId),
+    getLeadFunnel(userId),
+    getLeadSources(userId),
   ]);
 
   return (

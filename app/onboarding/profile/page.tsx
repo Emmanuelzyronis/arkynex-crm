@@ -2,16 +2,21 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
-import { saveProfileStep } from "@/lib/supabase/actions/onboarding";
+import { saveProfileStep } from "@/lib/db/mutations/onboarding";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { requireAuthContext } from "@/lib/auth/user";
+import { getProfile } from "@/lib/db/queries/profiles";
 
 const timezoneOptions = [
-  "Africa/Lagos", "Africa/Accra", "Africa/Nairobi", "Africa/Cairo", "Europe/London",
+  "UTC",
+  "America/New_York",
+  "America/Chicago",
+  "America/Los_Angeles",
+  "Europe/London",
 ];
 
 export default async function ProfileStep({
@@ -20,15 +25,8 @@ export default async function ProfileStep({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, phone, agency_name, timezone")
-    .eq("id", user.id)
-    .single();
+  const context = await requireAuthContext();
+  const profile = await getProfile(context.workspaceId);
 
   return (
     <div>
@@ -51,7 +49,7 @@ export default async function ProfileStep({
               id="fullName"
               name="fullName"
               required
-              defaultValue={profile?.full_name ?? ""}
+              defaultValue={profile?.fullName ?? ""}
               placeholder="John Doe"
               autoComplete="name"
             />
@@ -62,7 +60,7 @@ export default async function ProfileStep({
             <Input
               id="agencyName"
               name="agencyName"
-              defaultValue={profile?.agency_name ?? ""}
+              defaultValue={profile?.agencyName ?? ""}
               placeholder="Doe Properties Ltd."
             />
           </div>
@@ -80,7 +78,7 @@ export default async function ProfileStep({
 
           <div className="space-y-1.5">
             <Label htmlFor="timezone">Timezone</Label>
-            <Select id="timezone" name="timezone" defaultValue={profile?.timezone ?? "Africa/Lagos"}>
+            <Select id="timezone" name="timezone" defaultValue={profile?.timezone ?? "UTC"}>
               {timezoneOptions.map((tz) => (
                 <option key={tz} value={tz}>{tz}</option>
               ))}

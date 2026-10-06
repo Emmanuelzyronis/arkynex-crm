@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
-import { saveBusinessStep } from "@/lib/supabase/actions/onboarding";
+import { saveBusinessStep } from "@/lib/db/mutations/onboarding";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 
 const areas = [
-  "Victoria Island", "Lekki Phase 1", "Ikoyi", "Ajah",
-  "Banana Island", "Surulere", "Yaba", "Ikeja",
+  "Downtown", "Riverside", "Chelsea", "Greenwood",
+  "Harbor Island", "Maplewood", "Midtown", "Northgate",
 ];
 
 const propertyTypes = [
@@ -32,12 +32,8 @@ export default function BusinessStep() {
         {/* Primary market */}
         <div className="space-y-1.5">
           <p className="text-sm font-medium text-ink">Primary market</p>
-          <Select name="primaryMarket" defaultValue="Lagos" className="max-w-xs">
-            <option>Lagos</option>
-            <option>Abuja</option>
-            <option>Port Harcourt</option>
-            <option>Ibadan</option>
-            <option>Other</option>
+          <Select name="primaryMarket" defaultValue="New York" className="max-w-xs">
+            <option>New York</option><option>London</option><option>Dubai</option><option>Miami</option><option>Other</option>
           </Select>
         </div>
 

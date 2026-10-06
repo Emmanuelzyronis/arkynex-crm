@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { UserPlus } from "lucide-react";
 
-import { createLead } from "@/lib/supabase/mutations/leads";
+import { createLead } from "@/lib/db/mutations/leads";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -37,7 +37,7 @@ export default async function NewLeadPage({
         <div className="space-y-6">
           <FormSection title="Contact">
             <FormField label="Full name" htmlFor="fullName">
-              <Input id="fullName" name="fullName" required placeholder="e.g. Tunde Adebayo" autoComplete="name" />
+              <Input id="fullName" name="fullName" required placeholder="e.g. Marcus Bennett" autoComplete="name" />
             </FormField>
             <FormField label="Phone number" htmlFor="phone">
               <PhoneInput id="phone" name="phone" required placeholder="801 234 5678" autoComplete="tel" />

@@ -2,7 +2,7 @@
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
-import type { LeadSourcePoint } from "@/lib/supabase/queries/dashboard";
+import type { LeadSourcePoint } from "@/lib/db/queries/dashboard";
 
 export function LeadSources({ sources }: { sources: LeadSourcePoint[] }) {
   const isEmpty = sources.length === 0;

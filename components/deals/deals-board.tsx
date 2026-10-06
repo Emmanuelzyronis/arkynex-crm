@@ -1,5 +1,5 @@
 import { DealCard } from "@/components/deals/deal-card";
-import { formatNaira } from "@/lib/mock-leads";
+import { formatMoneyCompact } from "@/lib/currency";
 import { dealColumnOrder, dealStatusConfig, mockDeals } from "@/lib/mock-deals";
 
 function StatCard({ label, value }: { label: string; value: string }) {
@@ -34,9 +34,9 @@ export function DealsBoard() {
     <div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Active Deals" value={String(stats.activeCount)} />
-        <StatCard label="Pipeline Value" value={formatNaira(stats.pipelineValue)} />
-        <StatCard label="Weighted Value" value={formatNaira(stats.weightedValue)} />
-        <StatCard label="Commission Earned" value={formatNaira(stats.commissionEarned)} />
+        <StatCard label="Pipeline Value" value={formatMoneyCompact(stats.pipelineValue)} />
+        <StatCard label="Weighted Value" value={formatMoneyCompact(stats.weightedValue)} />
+        <StatCard label="Commission Earned" value={formatMoneyCompact(stats.commissionEarned)} />
       </div>
 
       <div className="mt-6 flex gap-4 overflow-x-auto pb-2">

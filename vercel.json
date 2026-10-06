@@ -1,0 +1,20 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/process-jobs",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/generate-ai-actions",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/score-leads",
+      "schedule": "30 0 * * *"
+    },
+    {
+      "path": "/api/cron/stale-lead-tasks",
+      "schedule": "0 8 * * *"
+    }
+  ]
+}

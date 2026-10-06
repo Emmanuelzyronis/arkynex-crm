@@ -1,4 +1,4 @@
-import type { FunnelStage } from "@/lib/supabase/queries/dashboard";
+import type { FunnelStage } from "@/lib/db/queries/dashboard";
 
 const VIEW_WIDTH = 400;
 const LABEL_AREA_END = 140;

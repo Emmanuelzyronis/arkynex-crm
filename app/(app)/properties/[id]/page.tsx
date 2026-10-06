@@ -2,9 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Bath, BedDouble, DollarSign, Eye, MapPin, MessageSquare, Ruler, Trash2 } from "lucide-react";
 
-import { createClient } from "@/lib/supabase/server";
-import { getProperty, getPhotoUrl, getDocumentUrl } from "@/lib/supabase/queries/properties";
-import { deleteProperty, updateProperty } from "@/lib/supabase/mutations/properties";
+import { getProperty, getPhotoUrl } from "@/lib/db/queries/properties";
+import { deleteProperty, updateProperty } from "@/lib/db/mutations/properties";
 import { PhotoUploadPanel } from "@/components/properties/photo-upload-panel";
 import { DocumentUploadPanel } from "@/components/properties/document-upload-panel";
 import { Button } from "@/components/ui/button";
@@ -17,11 +16,9 @@ import { BuildingIllustration } from "@/components/landing/building-illustration
 import { amenityOptions, conditionOptions, furnishingOptions, operatingAreas, propertyStatusOptions, propertyTypeOptions } from "@/lib/options";
 import { illustrationKind, statusConfig, ACCENTS } from "@/lib/mock-properties";
 import type { PropertyType } from "@/lib/mock-properties";
+import { requireUser } from "@/lib/auth/user";
+import { formatMoneyCompact } from "@/lib/currency";
 
-function formatNaira(n: number) {
-  if (n >= 1_000_000_000) return `₦${(n / 1_000_000_000).toFixed(1)}B`;
-  return `₦${Math.round(n / 1_000_000)}M`;
-}
 
 export default async function PropertyDetailPage({
   params,
@@ -29,32 +26,16 @@ export default async function PropertyDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const userId = await requireUser();
 
-  let property: Awaited<ReturnType<typeof getProperty>>;
-  try {
-    property = await getProperty(supabase, id);
-  } catch {
-    notFound();
-  }
+  const property = await getProperty(userId, id);
+  if (!property) notFound();
 
   const status = statusConfig[property.status as keyof typeof statusConfig] ?? { label: property.status, color: "#64748B" };
-  const kind = illustrationKind(property.property_type as PropertyType);
-  const primaryPhoto = property.property_photos.find((p) => p.is_primary) ?? property.property_photos[0];
-  const photoUrl = primaryPhoto ? getPhotoUrl(supabase, primaryPhoto.storage_path) : null;
+  const kind = illustrationKind(property.propertyType as PropertyType);
+  const primaryPhoto = property.propertyPhotos.find((p) => p.isPrimary) ?? property.propertyPhotos[0];
+  const photoUrl = primaryPhoto ? getPhotoUrl(primaryPhoto.storagePath) : null;
   const updateWithId = updateProperty.bind(null, property.id);
-
-  async function getDocUrl(path: string) {
-    "use server";
-    const s = await createClient();
-    return getDocumentUrl(s, path);
-  }
-
-  function getPhotoUrlServer(path: string) {
-    return getPhotoUrl(supabase, path);
-  }
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -67,8 +48,12 @@ export default async function PropertyDetailPage({
         <div className="space-y-5">
           {/* Hero image */}
           <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border border-line">
-            {photoUrl ? (
-              <img src={photoUrl} alt={property.title} className="h-full w-full object-cover" />
+            {photoUrl || property.imageUrl ? (
+              <img
+                src={(photoUrl ?? property.imageUrl) as string}
+                alt={property.title}
+                className="h-full w-full object-cover"
+              />
             ) : (
               <BuildingIllustration className="h-full w-full" accent={ACCENTS[0]} kind={kind} gradientId={property.id} />
             )}
@@ -86,14 +71,14 @@ export default async function PropertyDetailPage({
                 {[property.area, property.city].filter(Boolean).join(", ")}
               </p>
             )}
-            <p className="mt-3 text-2xl font-semibold tracking-tight text-ink">{formatNaira(property.price)}</p>
+            <p className="mt-3 text-2xl font-semibold tracking-tight text-ink">{formatMoneyCompact(property.price)}</p>
 
             <div className="mt-4 flex flex-wrap gap-4 text-sm text-ink-muted">
               {property.bedrooms != null && <span className="flex items-center gap-1.5"><BedDouble className="h-4 w-4" />{property.bedrooms} Beds</span>}
               {property.bathrooms != null && <span className="flex items-center gap-1.5"><Bath className="h-4 w-4" />{property.bathrooms} Baths</span>}
-              {property.size_sqm != null && <span className="flex items-center gap-1.5"><Ruler className="h-4 w-4" />{property.size_sqm.toLocaleString()} sqm</span>}
-              <span className="flex items-center gap-1.5"><MessageSquare className="h-4 w-4" />{property.inquiry_count} inquiries</span>
-              <span className="flex items-center gap-1.5"><Eye className="h-4 w-4" />{property.viewing_count} viewings</span>
+              {property.sizeSqm != null && <span className="flex items-center gap-1.5"><Ruler className="h-4 w-4" />{property.sizeSqm.toLocaleString()} sqm</span>}
+              <span className="flex items-center gap-1.5"><MessageSquare className="h-4 w-4" />{property.inquiryCount} inquiries</span>
+              <span className="flex items-center gap-1.5"><Eye className="h-4 w-4" />{property.viewingCount} viewings</span>
             </div>
 
             {property.description && (
@@ -113,8 +98,7 @@ export default async function PropertyDetailPage({
           <div className="rounded-2xl border border-line bg-card p-5">
             <PhotoUploadPanel
               propertyId={property.id}
-              photos={property.property_photos}
-              getPhotoUrl={getPhotoUrlServer}
+              photos={property.propertyPhotos}
             />
           </div>
 
@@ -122,8 +106,7 @@ export default async function PropertyDetailPage({
           <div className="rounded-2xl border border-line bg-card p-5">
             <DocumentUploadPanel
               propertyId={property.id}
-              documents={property.property_documents}
-              getDocumentUrl={getDocUrl}
+              documents={property.propertyDocuments}
             />
           </div>
         </div>
@@ -162,11 +145,11 @@ export default async function PropertyDetailPage({
           <div className="rounded-2xl border border-line bg-card p-5 text-sm">
             <h2 className="font-semibold text-ink">Details</h2>
             <div className="mt-3 space-y-2 text-ink-muted">
-              <div className="flex justify-between"><span>Type</span><span className="font-medium capitalize text-ink">{property.property_type}</span></div>
+              <div className="flex justify-between"><span>Type</span><span className="font-medium capitalize text-ink">{property.propertyType}</span></div>
               <div className="flex justify-between"><span>Ownership</span><span className="font-medium capitalize text-ink">{property.ownership}</span></div>
               {property.condition && <div className="flex justify-between"><span>Condition</span><span className="font-medium capitalize text-ink">{property.condition}</span></div>}
               {property.furnishing && <div className="flex justify-between"><span>Furnishing</span><span className="font-medium capitalize text-ink">{property.furnishing}</span></div>}
-              <div className="flex justify-between"><span>Listed</span><span className="font-medium text-ink">{new Date(property.listed_at).toLocaleDateString("en-NG", { month: "short", day: "numeric", year: "numeric" })}</span></div>
+              <div className="flex justify-between"><span>Listed</span><span className="font-medium text-ink">{new Date(property.listedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span></div>
             </div>
           </div>
 

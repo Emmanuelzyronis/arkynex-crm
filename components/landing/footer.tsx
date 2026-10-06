@@ -3,12 +3,37 @@ import { Instagram, Linkedin, Twitter } from "lucide-react";
 
 import { Logo } from "@/components/landing/logo";
 
-const footerLinks: Record<string, string[]> = {
-  Product: ["Features", "Pricing", "WhatsApp Integration", "AI Actions"],
-  Company: ["About", "Careers", "Blog"],
-  Resources: ["Help Center", "Guides", "API Docs"],
-  Legal: ["Privacy Policy", "Terms of Service"],
-};
+const footerLinks: { title: string; links: { label: string; href: string }[] }[] = [
+  {
+    title: "Product",
+    links: [
+      { label: "Features", href: "/#features" },
+      { label: "Pricing", href: "/#pricing" },
+      { label: "AI Actions", href: "/ai-actions" },
+      { label: "Reports", href: "/reports" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { label: "About", href: "/about" },
+      { label: "Contact", href: "/contact" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms of Service", href: "/terms" },
+    ],
+  },
+];
+
+const socialLinks = [
+  { label: "Arkynex on X", href: "https://x.com/arkynex", icon: Twitter },
+  { label: "Arkynex on LinkedIn", href: "https://www.linkedin.com/company/arkynex", icon: Linkedin },
+  { label: "Arkynex on Instagram", href: "https://www.instagram.com/arkynex", icon: Instagram },
+];
 
 export function Footer() {
   const year = new Date().getFullYear();
@@ -16,7 +41,7 @@ export function Footer() {
   return (
     <footer className="border-t border-line">
       <div className="mx-auto max-w-7xl px-6 py-14">
-        <div className="grid grid-cols-2 gap-10 sm:grid-cols-4 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-10 sm:grid-cols-4 lg:grid-cols-4">
           <div className="col-span-2 sm:col-span-4 lg:col-span-1">
             <Logo />
             <p className="mt-4 max-w-xs text-sm text-ink-muted">
@@ -24,29 +49,32 @@ export function Footer() {
               properties and deals in one place.
             </p>
             <div className="mt-5 flex gap-4 text-ink-muted">
-              <a href="#" aria-label="Arkynex on X">
-                <Twitter className="h-4 w-4" />
-              </a>
-              <a href="#" aria-label="Arkynex on LinkedIn">
-                <Linkedin className="h-4 w-4" />
-              </a>
-              <a href="#" aria-label="Arkynex on Instagram">
-                <Instagram className="h-4 w-4" />
-              </a>
+              {socialLinks.map(({ label, href, icon: Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  aria-label={label}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-colors hover:text-ink"
+                >
+                  <Icon className="h-4 w-4" />
+                </a>
+              ))}
             </div>
           </div>
 
-          {Object.entries(footerLinks).map(([heading, links]) => (
-            <div key={heading}>
-              <p className="text-sm font-semibold text-ink">{heading}</p>
+          {footerLinks.map(({ title, links }) => (
+            <div key={title}>
+              <p className="text-sm font-semibold text-ink">{title}</p>
               <ul className="mt-4 space-y-2.5">
                 {links.map((link) => (
-                  <li key={link}>
+                  <li key={link.label}>
                     <Link
-                      href="#"
+                      href={link.href}
                       className="text-sm text-ink-muted transition-colors hover:text-ink"
                     >
-                      {link}
+                      {link.label}
                     </Link>
                   </li>
                 ))}
@@ -60,7 +88,7 @@ export function Footer() {
             © {year} Arkynex. All rights reserved.
           </p>
           <p className="text-xs text-ink-muted">
-            Built for modern agents in Lagos, Abuja &amp; beyond.
+            Built for modern agents and teams worldwide.
           </p>
         </div>
       </div>

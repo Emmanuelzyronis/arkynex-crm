@@ -1,23 +1,26 @@
 export type PlanTier = "starter" | "pro" | "agency";
 
 export const timezoneOptions = [
-  "Africa/Lagos",
-  "Africa/Accra",
-  "Africa/Nairobi",
-  "Africa/Cairo",
+  "UTC",
+  "America/New_York",
+  "America/Chicago",
+  "America/Los_Angeles",
   "Europe/London",
+  "Europe/Berlin",
+  "Asia/Dubai",
+  "Asia/Singapore",
+  "Australia/Sydney",
 ];
 
 export const currentProfile = {
   fullName: "John Doe",
   email: "agent@example.com",
-  phone: "801 234 5678",
+  phone: "555 234 5678",
   agencyName: "Doe Properties Ltd.",
-  timezone: "Africa/Lagos",
+  timezone: "America/New_York",
   tier: "pro" as PlanTier,
   subscriptionStatus: "trialing" as const,
   trialDaysLeft: 9,
-  whatsappPhone: "+234 801 234 5678",
 };
 
 export const plans: Record<
@@ -26,28 +29,33 @@ export const plans: Record<
 > = {
   starter: {
     name: "Starter",
-    price: "₦5,000/mo",
+    price: "$29/mo",
     description: "For solo agents getting started",
-    features: ["Up to 50 active leads", "1 WhatsApp number", "Basic AI actions", "Email support"],
+    features: [
+      "Up to 250 active leads",
+      "Unlimited listings",
+      "Daily AI action digest",
+      "Email support",
+    ],
   },
   pro: {
     name: "Pro",
-    price: "₦15,000/mo",
+    price: "$59/mo",
     description: "For growing agents and small teams",
     features: [
       "Unlimited leads",
-      "WhatsApp + AI summaries",
+      "AI summaries & next actions",
       "Advanced analytics",
       "Priority support",
     ],
   },
   agency: {
     name: "Agency",
-    price: "₦40,000/mo",
+    price: "$149/mo",
     description: "For agencies with multiple agents",
     features: [
       "Everything in Pro",
-      "Multi-agent & co-agent deals",
+      "Team & co-agent deals",
       "Custom branding",
       "Dedicated account manager",
     ],
@@ -70,7 +78,7 @@ export const notificationGroups: { title: string; items: NotificationItem[] }[] 
       {
         id: "new_lead",
         label: "New lead captured",
-        description: "Get notified when a new lead comes in from WhatsApp, web or referral.",
+        description: "Get notified when a new lead comes in from your website, a referral or a social DM.",
         defaultChecked: true,
       },
       {

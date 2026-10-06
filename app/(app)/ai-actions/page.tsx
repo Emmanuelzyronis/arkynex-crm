@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import { Check, Copy, PartyPopper, X } from "lucide-react";
 
-import { createClient } from "@/lib/supabase/server";
-import { getAIActions } from "@/lib/supabase/queries/ai-actions";
-import { completeAction, dismissAction } from "@/lib/supabase/mutations/ai-actions";
+import { getAIActions } from "@/lib/db/queries/ai-actions";
+import { completeAction, dismissAction } from "@/lib/db/mutations/ai-actions";
 import { Button } from "@/components/ui/button";
+import { requireUser } from "@/lib/auth/user";
 
 const ACTION_TYPE_LABELS: Record<string, string> = {
   follow_up: "Follow Up",
@@ -18,11 +18,9 @@ const ACTION_TYPE_LABELS: Record<string, string> = {
 };
 
 export default async function AIActionsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const userId = await requireUser();
 
-  const groups = await getAIActions(supabase);
+  const groups = await getAIActions(userId);
 
   if (groups.length === 0) {
     return (
@@ -69,27 +67,27 @@ export default async function AIActionsPage() {
                 <div key={action.id} className="rounded-2xl border border-line bg-card p-4 sm:p-5">
                   <div className="flex items-start gap-3">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xs font-medium text-primary">
-                      {ACTION_TYPE_LABELS[action.action_type]?.split(" ").map((w: string) => w[0]).join("") ?? "AI"}
+                      {ACTION_TYPE_LABELS[action.actionType]?.split(" ").map((w: string) => w[0]).join("") ?? "AI"}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-ink">{action.title}</p>
                       <p className="mt-0.5 text-xs text-ink-muted capitalize">
-                        {ACTION_TYPE_LABELS[action.action_type] ?? action.action_type}
-                        {action.lead_id && " · Lead"}
-                        {action.deal_id && " · Deal"}
+                        {ACTION_TYPE_LABELS[action.actionType] ?? action.actionType}
+                        {action.leadId && " · Lead"}
+                        {action.dealId && " · Deal"}
                       </p>
                       <p className="mt-2 text-sm text-ink-muted">{action.body}</p>
 
-                      {action.suggested_message && (
+                      {action.suggestedMessage && (
                         <div className="mt-3 rounded-xl bg-surface p-3">
                           <p className="text-xs font-medium text-ink-muted">Suggested message</p>
-                          <p className="mt-1 text-sm text-ink">{action.suggested_message}</p>
+                          <p className="mt-1 text-sm text-ink">{action.suggestedMessage}</p>
                           <form className="mt-2">
-                            <input type="hidden" name="text" value={action.suggested_message} />
+                            <input type="hidden" name="text" value={action.suggestedMessage} />
                             <button
                               type="button"
                               onClick={async () => {
-                                await navigator.clipboard.writeText(action.suggested_message ?? "");
+                                await navigator.clipboard.writeText(action.suggestedMessage ?? "");
                               }}
                               className="flex items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 py-1.5 text-xs font-medium text-ink-muted hover:bg-surface"
                             >

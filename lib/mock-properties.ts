@@ -1,4 +1,5 @@
 import type { Kind } from "@/components/landing/building-illustration";
+import { propertyPhoto } from "@/lib/images";
 
 export type PropertyType = "apartment" | "house" | "land" | "commercial" | "office";
 export type PropertyStatus = "active" | "under_offer" | "sold" | "withdrawn";
@@ -14,6 +15,7 @@ export type Property = {
   bathrooms?: number;
   sizeSqm?: number;
   status: PropertyStatus;
+  imageUrl: string;
   inquiryCount: number;
   viewingCount: number;
   accent: string;
@@ -46,12 +48,12 @@ export const propertyTypeFilters: { value: string; label: string }[] = [
 // Cycled across cards purely for visual variety in the illustrations.
 export const ACCENTS = ["#5B5FEF", "#8B5CF6", "#3B82F6", "#10B981", "#F59E0B"];
 
-export const mockProperties: Property[] = [
+const mockPropertyList: Omit<Property, "imageUrl">[] = [
   {
     id: "p1",
     title: "4 Bedroom Duplex",
-    area: "Lekki Phase 1",
-    city: "Lagos",
+    area: "Riverside",
+    city: "New York",
     price: 250_000_000,
     propertyType: "house",
     bedrooms: 4,
@@ -65,8 +67,8 @@ export const mockProperties: Property[] = [
   {
     id: "p2",
     title: "3 Bedroom Apartment",
-    area: "Victoria Island",
-    city: "Lagos",
+    area: "Downtown",
+    city: "New York",
     price: 180_000_000,
     propertyType: "apartment",
     bedrooms: 3,
@@ -80,8 +82,8 @@ export const mockProperties: Property[] = [
   {
     id: "p3",
     title: "Waterfront Land",
-    area: "Banana Island",
-    city: "Lagos",
+    area: "Harbor Island",
+    city: "New York",
     price: 950_000_000,
     propertyType: "land",
     sizeSqm: 1200,
@@ -93,8 +95,8 @@ export const mockProperties: Property[] = [
   {
     id: "p4",
     title: "Office Suite, 6th Floor",
-    area: "Ikoyi",
-    city: "Lagos",
+    area: "Chelsea",
+    city: "New York",
     price: 320_000_000,
     propertyType: "office",
     bathrooms: 2,
@@ -107,8 +109,8 @@ export const mockProperties: Property[] = [
   {
     id: "p5",
     title: "2 Bedroom Flat",
-    area: "Ajah",
-    city: "Lagos",
+    area: "Greenwood",
+    city: "New York",
     price: 65_000_000,
     propertyType: "apartment",
     bedrooms: 2,
@@ -122,8 +124,8 @@ export const mockProperties: Property[] = [
   {
     id: "p6",
     title: "5 Bedroom Detached House",
-    area: "Banana Island",
-    city: "Lagos",
+    area: "Harbor Island",
+    city: "New York",
     price: 600_000_000,
     propertyType: "house",
     bedrooms: 5,
@@ -137,8 +139,8 @@ export const mockProperties: Property[] = [
   {
     id: "p7",
     title: "Commercial Plaza",
-    area: "Yaba",
-    city: "Lagos",
+    area: "Midtown",
+    city: "New York",
     price: 420_000_000,
     propertyType: "commercial",
     sizeSqm: 650,
@@ -151,7 +153,7 @@ export const mockProperties: Property[] = [
     id: "p8",
     title: "Mixed-Use Land",
     area: "Epe",
-    city: "Lagos",
+    city: "New York",
     price: 85_000_000,
     propertyType: "land",
     sizeSqm: 2000,
@@ -163,8 +165,8 @@ export const mockProperties: Property[] = [
   {
     id: "p9",
     title: "1 Bedroom Studio",
-    area: "Surulere",
-    city: "Lagos",
+    area: "Maplewood",
+    city: "New York",
     price: 38_000_000,
     propertyType: "apartment",
     bedrooms: 1,
@@ -176,6 +178,12 @@ export const mockProperties: Property[] = [
     accent: ACCENTS[3],
   },
 ];
+
+/** Demo listings enriched with real photography. */
+export const mockProperties: Property[] = mockPropertyList.map((property, index) => ({
+  ...property,
+  imageUrl: propertyPhoto(index),
+}));
 
 /** Maps a DB property_type to the matching BuildingIllustration variant. */
 export function illustrationKind(type: PropertyType): Kind {

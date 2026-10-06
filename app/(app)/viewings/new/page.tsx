@@ -2,15 +2,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CalendarPlus } from "lucide-react";
 
-import { createClient } from "@/lib/supabase/server";
-import { createViewing } from "@/lib/supabase/mutations/viewings";
-import { getLeads } from "@/lib/supabase/queries/leads";
-import { getProperties } from "@/lib/supabase/queries/properties";
+import { createViewing } from "@/lib/db/mutations/viewings";
+import { getLeads } from "@/lib/db/queries/leads";
+import { getProperties } from "@/lib/db/queries/properties";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { FormField, FormPageHeader, FormSection } from "@/components/forms/form-layout";
+import { requireUser } from "@/lib/auth/user";
 
 export default async function NewViewingPage({
   searchParams,
@@ -18,13 +18,11 @@ export default async function NewViewingPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const userId = await requireUser();
 
   const [leads, properties] = await Promise.all([
-    getLeads(supabase, { archived: false }),
-    getProperties(supabase),
+    getLeads(userId, { archived: false }),
+    getProperties(userId),
   ]);
 
   return (
@@ -43,7 +41,7 @@ export default async function NewViewingPage({
             <Select id="lead" name="lead" defaultValue="" required>
               <option value="" disabled>Select a lead</option>
               {leads.map((l) => (
-                <option key={l.id} value={l.id}>{l.full_name} — {l.phone}</option>
+                <option key={l.id} value={l.id}>{l.fullName} — {l.phone}</option>
               ))}
             </Select>
           </FormField>

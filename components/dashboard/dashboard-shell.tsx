@@ -5,16 +5,19 @@ import { useState } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { TopBar } from "@/components/dashboard/topbar";
 import { MobileTabBar } from "@/components/dashboard/mobile-tab-bar";
-import type { Tables } from "@/lib/supabase/types";
+import { BillingBanner } from "@/components/dashboard/billing-banner";
+import type { Profile } from "@/lib/db/schema";
 
 export function DashboardShell({
   children,
   profile,
+  billing,
   userId,
   pendingActionCount,
 }: {
   children: React.ReactNode;
-  profile: Tables<"profiles"> | null;
+  profile: Profile | null;
+  billing?: { status: string; trialDaysLeft: number } | null;
   userId: string;
   pendingActionCount: number;
 }) {
@@ -30,6 +33,12 @@ export function DashboardShell({
           userId={userId}
           pendingActionCount={pendingActionCount}
         />
+        {billing && (
+          <BillingBanner
+            status={billing.status}
+            trialDaysLeft={billing.trialDaysLeft}
+          />
+        )}
         <main className="flex-1 px-6 py-6 pb-24 lg:px-8 lg:py-8 lg:pb-8">
           {children}
         </main>

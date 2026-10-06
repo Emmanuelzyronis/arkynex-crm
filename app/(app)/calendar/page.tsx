@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { createClient } from "@/lib/supabase/server";
-import { getViewings } from "@/lib/supabase/queries/viewings";
+import { getViewings } from "@/lib/db/queries/viewings";
+import { getTasksInRange } from "@/lib/db/queries/tasks";
 import { cn } from "@/lib/utils";
+import { requireUser } from "@/lib/auth/user";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -13,6 +14,8 @@ const STATUS_COLORS: Record<string, string> = {
   no_show: "#EF4444",
   cancelled: "#64748B",
 };
+
+const TASK_COLOR = "#8B5CF6";
 
 function buildCalendarCells(year: number, month: number) {
   const firstDay = new Date(year, month, 1).getDay(); // 0 = Sunday
@@ -39,29 +42,45 @@ export default async function CalendarPage({
   searchParams: Promise<{ year?: string; month?: string }>;
 }) {
   const { year: yearParam, month: monthParam } = await searchParams;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const userId = await requireUser();
 
   const now = new Date();
   const year = parseInt(yearParam ?? String(now.getFullYear()));
   const month = parseInt(monthParam ?? String(now.getMonth())); // 0-indexed
 
   const cells = buildCalendarCells(year, month);
-  const viewings = await getViewings(supabase);
+  const monthStart = new Date(year, month, 1);
+  const monthEnd = new Date(year, month + 1, 0, 23, 59, 59);
+  const [viewings, tasks] = await Promise.all([
+    getViewings(userId),
+    getTasksInRange(userId, monthStart, monthEnd),
+  ]);
 
   // Map each viewing to a day number in the current month
   const eventsByDay: Record<number, { time: string; title: string; color: string }[]> = {};
   for (const v of viewings) {
-    const d = new Date(v.scheduled_at);
+    const d = new Date(v.scheduledAt);
     if (d.getFullYear() === year && d.getMonth() === month) {
       const day = d.getDate();
       if (!eventsByDay[day]) eventsByDay[day] = [];
-      const property = v.properties as { title: string; area: string | null } | null;
+      const property = v.property as { title: string; area: string | null } | null;
       eventsByDay[day].push({
-        time: d.toLocaleTimeString("en-NG", { hour: "numeric", minute: "2-digit" }),
-        title: (v.leads as { full_name: string } | null)?.full_name ?? "Lead",
+        time: d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+        title: (v.lead as { fullName: string } | null)?.fullName ?? "Lead",
         color: STATUS_COLORS[v.status] ?? "#64748B",
+      });
+    }
+  }
+
+  for (const task of tasks) {
+    const d = new Date(task.dueAt);
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      const day = d.getDate();
+      if (!eventsByDay[day]) eventsByDay[day] = [];
+      eventsByDay[day].push({
+        time: d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+        title: task.title,
+        color: TASK_COLOR,
       });
     }
   }
@@ -75,7 +94,7 @@ export default async function CalendarPage({
   const nextMonth = month === 11 ? 0 : month + 1;
   const nextYear = month === 11 ? year + 1 : year;
 
-  const monthLabel = new Date(year, month).toLocaleDateString("en-NG", { month: "long", year: "numeric" });
+  const monthLabel = new Date(year, month).toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
   return (
     <div className="space-y-6">
@@ -173,6 +192,10 @@ export default async function CalendarPage({
 
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-4 text-xs text-ink-muted">
+        <span className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: TASK_COLOR }} />
+          Task
+        </span>
         {Object.entries(STATUS_COLORS).map(([status, color]) => (
           <span key={status} className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />

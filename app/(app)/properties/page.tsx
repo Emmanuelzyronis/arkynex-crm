@@ -2,10 +2,10 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
-import { getProperties, getPhotoUrl } from "@/lib/supabase/queries/properties";
+import { getProperties, getPhotoUrl } from "@/lib/db/queries/properties";
 import { Button } from "@/components/ui/button";
 import { PropertiesGrid } from "@/components/properties/properties-grid";
+import { requireUser } from "@/lib/auth/user";
 
 export default async function PropertiesPage({
   searchParams,
@@ -13,11 +13,9 @@ export default async function PropertiesPage({
   searchParams: Promise<{ status?: string; type?: string; q?: string }>;
 }) {
   const { status, type, q } = await searchParams;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const userId = await requireUser();
 
-  const properties = await getProperties(supabase, {
+  const properties = await getProperties(userId, {
     status,
     propertyType: type,
     search: q,
@@ -26,8 +24,8 @@ export default async function PropertiesPage({
   // Attach public photo URLs
   const propertiesWithUrls = properties.map((p) => ({
     ...p,
-    primaryPhotoUrl: p.property_photos.find((ph) => ph.is_primary)
-      ? getPhotoUrl(supabase, p.property_photos.find((ph) => ph.is_primary)!.storage_path)
+    primaryPhotoUrl: p.propertyPhotos.find((ph) => ph.isPrimary)
+      ? getPhotoUrl(p.propertyPhotos.find((ph) => ph.isPrimary)!.storagePath)
       : null,
   }));
 

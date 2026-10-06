@@ -8,10 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { propertyStatusFilters, propertyTypeFilters } from "@/lib/mock-properties";
-import type { Property, PropertyPhoto } from "@/lib/supabase/queries/properties";
+import type { PropertyWithPhotos } from "@/lib/db/queries/properties";
 
-type PropertyWithUrl = Property & {
-  property_photos: PropertyPhoto[];
+type PropertyWithUrl = PropertyWithPhotos & {
   primaryPhotoUrl: string | null;
 };
 
@@ -19,17 +18,14 @@ import { Bath, BedDouble, Eye, MessageSquare, Ruler } from "lucide-react";
 import { BuildingIllustration } from "@/components/landing/building-illustration";
 import { illustrationKind, statusConfig, ACCENTS } from "@/lib/mock-properties";
 import type { PropertyType } from "@/lib/mock-properties";
+import { formatMoneyCompact } from "@/lib/currency";
 
-function formatNaira(n: number) {
-  if (n >= 1_000_000_000) return `₦${(n / 1_000_000_000).toFixed(1)}B`;
-  return `₦${Math.round(n / 1_000_000)}M`;
-}
 
 function PropertyCard({ property, index }: { property: PropertyWithUrl; index: number }) {
   const router = useRouter();
   const status = statusConfig[property.status as keyof typeof statusConfig] ?? { label: property.status, color: "#64748B" };
   const accent = ACCENTS[index % ACCENTS.length];
-  const kind = illustrationKind(property.property_type as PropertyType);
+  const kind = illustrationKind(property.propertyType as PropertyType);
 
   return (
     <div
@@ -37,10 +33,11 @@ function PropertyCard({ property, index }: { property: PropertyWithUrl; index: n
       className="cursor-pointer overflow-hidden rounded-2xl border border-line bg-card transition-shadow hover:shadow-lg hover:shadow-ink/5"
     >
       <div className="relative aspect-[16/10]">
-        {property.primaryPhotoUrl ? (
+        {property.primaryPhotoUrl || property.imageUrl ? (
           <img
-            src={property.primaryPhotoUrl}
+            src={(property.primaryPhotoUrl ?? property.imageUrl) as string}
             alt={property.title}
+            loading="lazy"
             className="h-full w-full object-cover"
           />
         ) : (
@@ -64,7 +61,7 @@ function PropertyCard({ property, index }: { property: PropertyWithUrl; index: n
         <p className="text-xs text-ink-muted">
           {[property.area, property.city].filter(Boolean).join(", ")}
         </p>
-        <p className="mt-2 text-base font-semibold text-ink">{formatNaira(property.price)}</p>
+        <p className="mt-2 text-base font-semibold text-ink">{formatMoneyCompact(property.price)}</p>
 
         <div className="mt-3 flex items-center gap-3 text-xs text-ink-muted">
           {property.bedrooms != null && (
@@ -73,14 +70,14 @@ function PropertyCard({ property, index }: { property: PropertyWithUrl; index: n
           {property.bathrooms != null && (
             <span className="flex items-center gap-1"><Bath className="h-3.5 w-3.5" />{property.bathrooms} Baths</span>
           )}
-          {property.size_sqm != null && (
-            <span className="flex items-center gap-1"><Ruler className="h-3.5 w-3.5" />{property.size_sqm.toLocaleString()} sqm</span>
+          {property.sizeSqm != null && (
+            <span className="flex items-center gap-1"><Ruler className="h-3.5 w-3.5" />{property.sizeSqm.toLocaleString()} sqm</span>
           )}
         </div>
 
         <div className="mt-4 flex items-center gap-4 border-t border-line pt-3 text-xs text-ink-muted">
-          <span className="flex items-center gap-1"><MessageSquare className="h-3.5 w-3.5" />{property.inquiry_count} inquiries</span>
-          <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" />{property.viewing_count} viewings</span>
+          <span className="flex items-center gap-1"><MessageSquare className="h-3.5 w-3.5" />{property.inquiryCount} inquiries</span>
+          <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" />{property.viewingCount} viewings</span>
         </div>
       </div>
     </div>
@@ -96,7 +93,7 @@ export function PropertiesGrid({ properties }: { properties: PropertyWithUrl[] }
     const q = query.trim().toLowerCase();
     return properties.filter((p) => {
       const matchesStatus = status === "all" || p.status === status;
-      const matchesType = type === "all" || p.property_type === type;
+      const matchesType = type === "all" || p.propertyType === type;
       const matchesQuery = q === "" || p.title.toLowerCase().includes(q) || (p.area ?? "").toLowerCase().includes(q);
       return matchesStatus && matchesType && matchesQuery;
     });

@@ -1,4 +1,4 @@
-import { Mail, MessageCircle } from "lucide-react";
+import { Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { HelpCategories } from "@/components/help/help-categories";
@@ -36,9 +36,9 @@ export default function HelpPage() {
             </a>
           </Button>
           <Button asChild>
-            <a href="https://wa.me/2348000000000" target="_blank" rel="noopener noreferrer">
-              <MessageCircle className="h-4 w-4" />
-              Chat on WhatsApp
+            <a href="mailto:support@arkynex.com?subject=Arkynex%20support">
+              <Mail className="h-4 w-4" />
+              Contact support
             </a>
           </Button>
         </div>

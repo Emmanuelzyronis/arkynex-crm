@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, Sparkles } from "lucide-react";
 
-import { createClient } from "@/lib/supabase/client";
+import Ably from "ably";
 
 export function LiveActionBell({
   userId,
@@ -17,44 +17,21 @@ export function LiveActionBell({
   const [justArrived, setJustArrived] = useState(false);
 
   useEffect(() => {
-    const supabase = createClient();
+    const client = new Ably.Realtime({ authUrl: "/api/realtime/token" });
+    const channel = client.channels.get(`ai-actions:${userId}`);
 
-    const channel = supabase
-      .channel(`ai_actions:agent_id=eq.${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "ai_actions",
-          filter: `agent_id=eq.${userId}`,
-        },
-        () => {
-          setCount((c) => c + 1);
-          setJustArrived(true);
-          setTimeout(() => setJustArrived(false), 2000);
-        },
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "ai_actions",
-          filter: `agent_id=eq.${userId}`,
-        },
-        (payload) => {
-          // If an action was just completed/dismissed, decrement
-          const wasActive = !payload.old.completed && !payload.old.dismissed;
-          const isActive = !payload.new.completed && !payload.new.dismissed;
-          if (wasActive && !isActive) {
-            setCount((c) => Math.max(0, c - 1));
-          }
-        },
-      )
-      .subscribe();
+    const handler = () => {
+      setCount((c) => c + 1);
+      setJustArrived(true);
+      setTimeout(() => setJustArrived(false), 2000);
+    };
 
-    return () => { supabase.removeChannel(channel); };
+    channel.subscribe("refresh", handler);
+
+    return () => {
+      channel.unsubscribe("refresh", handler);
+      client.close();
+    };
   }, [userId]);
 
   return (

@@ -6,16 +6,17 @@ import { eq } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { profiles } from "@/lib/db/schema";
-import { requireUser } from "@/lib/auth/user";
+import { requireUser, requireOwnProfileId } from "@/lib/auth/user";
+import { notificationGroups } from "@/lib/mock-settings";
 
 /** Save profile settings (name, phone, agency, timezone). */
 export async function saveProfile(formData: FormData) {
-  const userId = await requireUser();
+  const userId = await requireOwnProfileId();
 
   const fullName = String(formData.get("fullName") ?? "").trim() || undefined;
   const phone = String(formData.get("phone") ?? "").trim() || null;
   const agencyName = String(formData.get("agencyName") ?? "").trim() || null;
-  const timezone = String(formData.get("timezone") ?? "Africa/Lagos");
+  const timezone = String(formData.get("timezone") ?? "UTC");
 
   await db
     .update(profiles)
@@ -27,17 +28,39 @@ export async function saveProfile(formData: FormData) {
   redirect("/settings?success=profile");
 }
 
-/** Save WhatsApp phone number in profile settings. */
-export async function saveWhatsAppSettings(formData: FormData) {
+/** Save business preferences (market, areas, property types, website). */
+export async function saveBusinessSettings(formData: FormData) {
   const userId = await requireUser();
 
-  const whatsappPhone = String(formData.get("whatsappPhone") ?? "").trim() || null;
+  const market = String(formData.get("primaryMarket") ?? "Other").trim() || "Other";
+  const areas = formData.getAll("areas").map(String).filter(Boolean);
+  const propertyTypes = formData.getAll("propertyTypes").map(String).filter(Boolean);
+  const websiteUrl = String(formData.get("websiteUrl") ?? "").trim() || null;
 
   await db
     .update(profiles)
-    .set({ whatsappPhone })
+    .set({ businessPrefs: { market, areas, propertyTypes }, websiteUrl })
     .where(eq(profiles.id, userId));
 
   revalidatePath("/settings");
-  redirect("/settings?success=whatsapp");
+  redirect("/settings?success=business");
+}
+
+/** Persist notification preferences as a jsonb map of id -> enabled. */
+export async function saveNotificationPrefs(formData: FormData) {
+  const userId = await requireOwnProfileId();
+
+  const prefs = Object.fromEntries(
+    notificationGroups.flatMap((group) =>
+      group.items.map((item) => [item.id, String(formData.get(item.id) ?? "") === "on"]),
+    ),
+  );
+
+  await db
+    .update(profiles)
+    .set({ notificationPrefs: prefs })
+    .where(eq(profiles.id, userId));
+
+  revalidatePath("/settings");
+  redirect("/settings?success=notifications");
 }

@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 export const onboardingSteps = [
   { slug: "profile", title: "Profile", description: "Tell us about yourself" },
   { slug: "business", title: "Business", description: "Set up your business" },
-  { slug: "whatsapp", title: "WhatsApp", description: "Connect your channel" },
   { slug: "goals", title: "Goals", description: "Tell us your goals" },
 ];
 

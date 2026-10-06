@@ -2,13 +2,9 @@
 
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-import type { ReportRevenuePoint } from "@/lib/supabase/queries/reports";
+import type { ReportRevenuePoint } from "@/lib/db/queries/reports";
+import { formatMoneyCompact } from "@/lib/currency";
 
-function formatCurrency(value: number) {
-  if (value === 0) return "₦0";
-  if (value >= 1_000_000_000) return `₦${(value / 1_000_000_000).toFixed(1)}B`;
-  return `₦${(value / 1_000_000).toFixed(0)}M`;
-}
 
 export function RevenueTrendChart({ data }: { data: ReportRevenuePoint[] }) {
   const isEmpty = data.every((d) => d.revenue === 0);
@@ -33,9 +29,9 @@ export function RevenueTrendChart({ data }: { data: ReportRevenuePoint[] }) {
                 </linearGradient>
               </defs>
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: "#6B7280", fontSize: 12 }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fill: "#6B7280", fontSize: 12 }} tickFormatter={formatCurrency} width={48} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fill: "#6B7280", fontSize: 12 }} tickFormatter={formatMoneyCompact} width={48} />
               <Tooltip
-                formatter={(value: number) => [formatCurrency(value), "Revenue"]}
+                formatter={(value: number) => [formatMoneyCompact(value), "Revenue"]}
                 contentStyle={{ borderRadius: 12, border: "1px solid #E5E7EB", fontSize: 12, boxShadow: "0 4px 12px rgba(17,24,39,0.06)" }}
               />
               <Area type="monotone" dataKey="revenue" stroke="#5B5FEF" strokeWidth={2} fill="url(#reportsRevenueFill)" />

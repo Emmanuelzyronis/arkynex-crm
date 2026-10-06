@@ -6,8 +6,8 @@ const PhoneInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"inpu
   ({ className, ...props }, ref) => (
     <div className="flex h-11 items-center rounded-xl border border-line bg-card transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/30">
       <span className="flex h-full items-center gap-1.5 border-r border-line px-3 text-sm text-ink">
-        <span aria-hidden="true">🇳🇬</span>
-        +234
+        <span aria-hidden="true">🌐</span>
+        +1
       </span>
       <input
         ref={ref}
