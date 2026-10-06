@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Tables } from "@/lib/supabase/types";
+import type { Database, Tables, SupaClient } from "@/lib/supabase/types";
 
 export type AIActionRow = Tables<"ai_actions">;
 
@@ -17,7 +16,7 @@ const PRIORITY_CONFIG: Record<string, { label: string; color: string; order: num
 };
 
 export async function getAIActions(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
   includeCompleted = false,
 ): Promise<AIActionGroup[]> {
   let query = supabase

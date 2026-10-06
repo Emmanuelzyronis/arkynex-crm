@@ -1,6 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-
-import type { Database, Tables } from "@/lib/supabase/types";
+import type { Database, Tables, SupaClient } from "@/lib/supabase/types";
 
 export type DealRow = Tables<"deals">;
 
@@ -11,7 +9,7 @@ export type DealWithDetails = DealRow & {
 };
 
 export async function getDeals(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
 ): Promise<DealWithDetails[]> {
   const { data, error } = await supabase
     .from("deals")
@@ -23,7 +21,7 @@ export async function getDeals(
 }
 
 export async function getDeal(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
   id: string,
 ): Promise<DealWithDetails> {
   const { data, error } = await supabase

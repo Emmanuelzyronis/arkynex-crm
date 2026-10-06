@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/lib/supabase/types";
+import type { Database, Json } from "@/lib/supabase/types";
 
 // ─── Plan mapping — Paystack plan codes → Arkynex tier ────────────────────────
 // Add your actual Paystack plan codes here after creating plans in the dashboard.
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
   await supabase.from("webhook_logs").insert({
     source: "paystack",
     event_type: event,
-    payload: payload as Record<string, unknown>,
+    payload: payload as unknown as Json,
     processed: false,
   });
 

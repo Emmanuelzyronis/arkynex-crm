@@ -1,6 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-
-import type { Database, Tables } from "@/lib/supabase/types";
+import type { Database, Tables, SupaClient } from "@/lib/supabase/types";
 
 export type ViewingRow = Tables<"viewings">;
 
@@ -15,7 +13,7 @@ export type ViewingFilter = {
 };
 
 export async function getViewings(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
   filters: ViewingFilter = {},
 ): Promise<ViewingWithDetails[]> {
   let query = supabase
@@ -33,7 +31,7 @@ export async function getViewings(
 }
 
 export async function getViewing(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
   id: string,
 ): Promise<ViewingWithDetails> {
   const { data, error } = await supabase

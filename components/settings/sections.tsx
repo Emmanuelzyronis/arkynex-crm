@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils";
 import type { Tables } from "@/lib/supabase/types";
 
 type Profile = Tables<"profiles"> | null;
-import type { Tables } from "@/lib/supabase/types";
 
 
 const timezoneOptions = [

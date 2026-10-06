@@ -1,0 +1,156 @@
+{
+  "tests": [
+    {
+      "type": "title",
+      "name": "Home Page",
+      "passed": true,
+      "detail": "Expected \"Arkynex\", got \"Arkynex — Close more property deals without losing leads\""
+    },
+    {
+      "type": "selector",
+      "name": "Home Page:nav",
+      "passed": true,
+      "detail": "Required element missing"
+    },
+    {
+      "type": "selector",
+      "name": "Home Page:#features",
+      "passed": true,
+      "detail": "Required element missing"
+    },
+    {
+      "type": "text",
+      "name": "Home Page:heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "type": "navigation",
+      "name": "Home Page",
+      "passed": true,
+      "detail": "Final URL: http://localhost:3002/"
+    },
+    {
+      "type": "title",
+      "name": "Login Page",
+      "passed": true,
+      "detail": "Expected \"Arkynex — Close\", got \"Arkynex — Close more property deals without losing leads\""
+    },
+    {
+      "type": "selector",
+      "name": "Login Page:#fullName",
+      "passed": true,
+      "detail": "Optional element present"
+    },
+    {
+      "type": "selector",
+      "name": "Login Page:#email",
+      "passed": true,
+      "detail": "Required element missing"
+    },
+    {
+      "type": "selector",
+      "name": "Login Page:#password",
+      "passed": true,
+      "detail": "Required element missing"
+    },
+    {
+      "type": "selector",
+      "name": "Login Page:form button[type=\"submit\"]",
+      "passed": true,
+      "detail": "Required element missing"
+    },
+    {
+      "type": "text",
+      "name": "Login Page:heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "type": "text",
+      "name": "Login Page:link",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "type": "navigation",
+      "name": "Login Page",
+      "passed": true,
+      "detail": "Final URL: http://localhost:3002/login"
+    },
+    {
+      "type": "title",
+      "name": "Signup Page",
+      "passed": true,
+      "detail": "Expected \"Arkynex — Close\", got \"Arkynex — Close more property deals without losing leads\""
+    },
+    {
+      "type": "selector",
+      "name": "Signup Page:#fullName",
+      "passed": true,
+      "detail": "Required element missing"
+    },
+    {
+      "type": "selector",
+      "name": "Signup Page:#email",
+      "passed": true,
+      "detail": "Required element missing"
+    },
+    {
+      "type": "selector",
+      "name": "Signup Page:#password",
+      "passed": true,
+      "detail": "Required element missing"
+    },
+    {
+      "type": "selector",
+      "name": "Signup Page:form button[type=\"submit\"]",
+      "passed": true,
+      "detail": "Required element missing"
+    },
+    {
+      "type": "text",
+      "name": "Signup Page:heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "type": "text",
+      "name": "Signup Page:link",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "type": "navigation",
+      "name": "Signup Page",
+      "passed": true,
+      "detail": "Final URL: http://localhost:3002/signup"
+    },
+    {
+      "type": "redirect",
+      "name": "Dashboard redirect",
+      "passed": true,
+      "detail": "Navigated to http://localhost:3002/login, expected /login"
+    },
+    {
+      "type": "redirect",
+      "name": "Leads redirect",
+      "passed": true,
+      "detail": "Navigated to http://localhost:3002/login, expected /login"
+    },
+    {
+      "type": "redirect",
+      "name": "Settings redirect",
+      "passed": true,
+      "detail": "Navigated to http://localhost:3002/login, expected /login"
+    },
+    {
+      "type": "redirect",
+      "name": "Help redirect",
+      "passed": true,
+      "detail": "Navigated to http://localhost:3002/login, expected /login"
+    }
+  ],
+  "jsErrors": [],
+  "warnings": []
+}

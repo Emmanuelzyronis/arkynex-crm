@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { Database, TablesInsert } from "@/lib/supabase/types";
+import type { Database, Json, TablesInsert } from "@/lib/supabase/types";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
   await supabase.from("webhook_logs").insert({
     source: "whatsapp",
     event_type: "incoming",
-    payload: payload as Record<string, unknown>,
+    payload: payload as unknown as Json,
   });
 
   // Extract messages from the Meta payload structure

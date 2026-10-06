@@ -1,6 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-
-import type { Database, Tables } from "@/lib/supabase/types";
+import type { Database, Tables, SupaClient } from "@/lib/supabase/types";
 
 export type CommunicationRow = Tables<"communications">;
 
@@ -22,7 +20,7 @@ export type Thread = {
  * Sorted by most recent message first.
  */
 export async function getConversations(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
 ): Promise<ConversationSummary[]> {
   // Get all comms, ordered newest first
   const { data, error } = await supabase
@@ -58,7 +56,7 @@ export async function getConversations(
  * All messages for a specific lead, ordered oldest-first for chat display.
  */
 export async function getThread(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
   leadId: string,
 ): Promise<Thread | null> {
   const [{ data: lead, error: leadError }, { data: messages, error: msgError }] =

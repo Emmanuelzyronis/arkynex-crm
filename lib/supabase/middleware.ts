@@ -1,7 +1,7 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import type { NextRequest, NextResponse } from "next/server";
 
-import type { Database } from "@/lib/supabase/types";
+import type { SupaClient } from "@/lib/supabase/types";
 
 /**
  * Call this inside middleware.ts to refresh the Supabase session on every
@@ -11,7 +11,7 @@ export async function updateSession(
   request: NextRequest,
   response: NextResponse,
 ) {
-  const supabase = createServerClient<Database>(
+  const supabase: SupaClient = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -19,7 +19,7 @@ export async function updateSession(
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );

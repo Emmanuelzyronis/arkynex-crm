@@ -421,10 +421,7 @@ export type Database = {
           updated_at: string;
           whatsapp_pairing_code: string | null;
           whatsapp_pairing_expires: string | null;
-          whatsapp_pairing_code: string | null;
-          whatsapp_pairing_expires: string | null;
           whatsapp_phone: string | null;
-          whatsapp_verified_at: string | null;
           whatsapp_verified_at: string | null;
         };
         Insert: {
@@ -814,3 +811,15 @@ export type TablesInsert<Name extends keyof DefaultSchema["Tables"]> =
 
 export type TablesUpdate<Name extends keyof DefaultSchema["Tables"]> =
   DefaultSchema["Tables"][Name] extends { Update: infer U } ? U : never;
+
+/**
+ * Supabase client type compatible with both:
+ * - @supabase/ssr createBrowserClient / createServerClient (which pass 3 generic params)
+ * - @supabase/supabase-js v2.108.2 SupabaseClient class (which has 5 generic params)
+ *
+ * The SSR package puts the schema object in the 3rd position, while newer
+ * supabase-js expects a string there. Using `any` for the middle params
+ * makes the parameter accept either form.
+ */
+import type { SupabaseClient } from "@supabase/supabase-js";
+export type SupaClient = SupabaseClient<Database, any, any>;

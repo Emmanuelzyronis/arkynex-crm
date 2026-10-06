@@ -1,6 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-
-import type { Database } from "@/lib/supabase/types";
+import type { Database, SupaClient } from "@/lib/supabase/types";
 
 export type ReportStatsData = {
   totalRevenue: number;
@@ -46,7 +44,7 @@ const VIEWING_OUTCOME_COLORS: Record<string, string> = {
 };
 
 export async function getReportStats(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
 ): Promise<ReportStatsData> {
   const [
     { data: completed },
@@ -68,7 +66,7 @@ export async function getReportStats(
 }
 
 export async function getReportRevenueTrend(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
   months = 12,
 ): Promise<ReportRevenuePoint[]> {
   const start = new Date();
@@ -105,7 +103,7 @@ export async function getReportRevenueTrend(
 }
 
 export async function getReportDealStages(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
 ): Promise<ReportDealStage[]> {
   const { data, error } = await supabase
     .from("deals")
@@ -131,7 +129,7 @@ export async function getReportDealStages(
 }
 
 export async function getReportViewingOutcomes(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
 ): Promise<ReportViewingOutcome[]> {
   const { data, error } = await supabase.from("viewings").select("status");
   if (error) throw error;
@@ -149,7 +147,7 @@ export async function getReportViewingOutcomes(
 }
 
 export async function getReportTopProperties(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
   limit = 5,
 ): Promise<ReportTopProperty[]> {
   const { data, error } = await supabase
@@ -171,7 +169,7 @@ export async function getReportTopProperties(
   }));
 }
 
-export async function getAllReportData(supabase: SupabaseClient<Database>) {
+export async function getAllReportData(supabase: SupaClient) {
   const [stats, revenue, dealStages, viewingOutcomes, topProperties] = await Promise.all([
     getReportStats(supabase),
     getReportRevenueTrend(supabase),

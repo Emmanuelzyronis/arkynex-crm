@@ -1,6 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-
-import type { Database } from "@/lib/supabase/types";
+import type { Database, SupaClient } from "@/lib/supabase/types";
 
 /**
  * All dashboard data fetched in parallel.
@@ -71,7 +69,7 @@ const SOURCE_COLORS: Record<string, string> = {
 
 /** Stats row — lead count, viewings/deals/revenue for current + previous month. */
 export async function getDashboardStats(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
 ): Promise<DashboardStats> {
   const now = new Date();
   const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -155,7 +153,7 @@ export async function getDashboardStats(
 
 /** Lead pipeline funnel — count per stage for active (non-archived) leads. */
 export async function getLeadFunnel(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
 ): Promise<FunnelStage[]> {
   const { data, error } = await supabase
     .from("leads")
@@ -174,7 +172,7 @@ export async function getLeadFunnel(
 
 /** Last 6 months of commission revenue from completed deals. */
 export async function getRevenueTrend(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
 ): Promise<RevenuePoint[]> {
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
@@ -212,7 +210,7 @@ export async function getRevenueTrend(
 
 /** Lead sources breakdown for the donut chart. */
 export async function getLeadSources(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
 ): Promise<LeadSourcePoint[]> {
   const { data, error } = await supabase
     .from("leads")
@@ -250,7 +248,7 @@ export async function getLeadSources(
 
 /** Next 5 upcoming scheduled viewings with property + lead names. */
 export async function getUpcomingViewings(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
 ): Promise<UpcomingViewing[]> {
   const { data, error } = await supabase
     .from("viewings")
@@ -268,16 +266,16 @@ export async function getUpcomingViewings(
 
   return (data ?? []).map((v) => ({
     id: v.id,
-    propertyTitle: (v.properties as { title: string; area: string | null } | null)?.title ?? "Property",
-    propertyArea: (v.properties as { title: string; area: string | null } | null)?.area ?? null,
-    leadName: (v.leads as { full_name: string } | null)?.full_name ?? "Lead",
+    propertyTitle: ((v.properties as unknown as { title: string; area: string | null } | null)?.title ?? "Property"),
+    propertyArea: ((v.properties as unknown as { title: string; area: string | null } | null)?.area ?? null),
+    leadName: ((v.leads as unknown as { full_name: string } | null)?.full_name ?? "Lead"),
     scheduledAt: v.scheduled_at,
   }));
 }
 
 /** Today's pending AI actions (not completed or dismissed). */
 export async function getPendingAIActions(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
 ): Promise<PendingAIAction[]> {
   const today = new Date().toISOString().split("T")[0];
 
@@ -308,7 +306,7 @@ export async function getPendingAIActions(
 }
 
 /** Run all dashboard queries in parallel — call this once from the page. */
-export async function getAllDashboardData(supabase: SupabaseClient<Database>) {
+export async function getAllDashboardData(supabase: SupaClient) {
   const [stats, funnel, revenue, sources, viewings, actions] = await Promise.all([
     getDashboardStats(supabase),
     getLeadFunnel(supabase),

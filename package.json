@@ -9,30 +9,35 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "next": "^16.2.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "motion": "^12.4.0",
-    "lucide-react": "^0.480.0",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^2.6.0",
-    "@radix-ui/react-slot": "^1.1.1",
+    "@clerk/nextjs": "^7.9.10",
+    "@neondatabase/serverless": "^1.2.0",
     "@radix-ui/react-checkbox": "^1.1.4",
+    "@radix-ui/react-slot": "^1.1.1",
     "@radix-ui/react-switch": "^1.1.2",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
-    "recharts": "^2.15.0"
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "drizzle-orm": "^0.45.3",
+    "lucide-react": "^0.480.0",
+    "motion": "^12.4.0",
+    "next": "^16.2.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "recharts": "^2.15.0",
+    "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
+    "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@tailwindcss/postcss": "^4.0.0",
-    "tailwindcss": "^4.0.0",
-    "postcss": "^8.5.0",
+    "drizzle-kit": "^0.31.11",
     "eslint": "^9.17.0",
-    "eslint-config-next": "^16.2.0"
+    "eslint-config-next": "^16.2.0",
+    "postcss": "^8.5.0",
+    "puppeteer": "^25.12.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0"
   }
 }

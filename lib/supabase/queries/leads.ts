@@ -1,6 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-
-import type { Database, Tables } from "@/lib/supabase/types";
+import type { Database, Tables, SupaClient } from "@/lib/supabase/types";
 
 export type Lead = Tables<"leads">;
 
@@ -15,7 +13,7 @@ export type LeadFilters = {
  * Always scoped to `agent_id = auth.uid()` via RLS — no extra filter needed.
  */
 export async function getLeads(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
   filters: LeadFilters = {},
 ) {
   let query = supabase
@@ -58,7 +56,7 @@ export async function getLeads(
  * RLS ensures the agent can only read their own lead.
  */
 export async function getLead(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
   id: string,
 ) {
   const { data, error } = await supabase

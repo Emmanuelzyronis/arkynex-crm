@@ -100,7 +100,7 @@ export default async function LeadDetailPage({
                 <div className="sm:col-span-2">
                   <p className="text-xs text-ink-muted">Preferred areas</p>
                   <div className="mt-1.5 flex flex-wrap gap-2">
-                    {lead.location_prefs.map((area) => (
+                    {lead.location_prefs.map((area: string) => (
                       <span key={area} className="flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 text-xs text-ink-muted">
                         <MapPin className="h-3 w-3" />{area}
                       </span>

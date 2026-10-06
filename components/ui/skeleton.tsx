@@ -64,10 +64,10 @@ export function SkeletonStatsRow() {
 
 export function SkeletonChart({ height = 56 }: { height?: number }) {
   return (
-    <div className="rounded-2xl border border-line bg-card p-5">
+    <div className="rounded-2xl border border-line bg-card p-5" style={{ minHeight: height }}>
       <Skeleton className="h-4 w-32" />
       <Skeleton className="mt-3 h-7 w-36" />
-      <Skeleton className={`mt-4 w-full rounded-xl`} style={{ height }} />
+      <Skeleton className="mt-4 w-full rounded-xl" />
     </div>
   );
 }

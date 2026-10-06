@@ -1,6 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-
-import type { Database, Tables } from "@/lib/supabase/types";
+import type { Database, Tables, SupaClient } from "@/lib/supabase/types";
 
 export type Property = Tables<"properties">;
 export type PropertyPhoto = Tables<"property_photos">;
@@ -22,7 +20,7 @@ export type PropertyFilters = {
  * Optional status/type/search filters.
  */
 export async function getProperties(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
   filters: PropertyFilters = {},
 ) {
   let query = supabase
@@ -52,7 +50,7 @@ export async function getProperties(
  * Single property with all photos and documents.
  */
 export async function getProperty(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
   id: string,
 ) {
   const { data, error } = await supabase
@@ -70,7 +68,7 @@ export async function getProperty(
  * The property-photos bucket is public so no signing is needed.
  */
 export function getPhotoUrl(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
   storagePath: string,
 ) {
   const { data } = supabase.storage
@@ -84,7 +82,7 @@ export function getPhotoUrl(
  * Valid for 60 minutes.
  */
 export async function getDocumentUrl(
-  supabase: SupabaseClient<Database>,
+  supabase: SupaClient,
   storagePath: string,
 ) {
   const { data, error } = await supabase.storage
