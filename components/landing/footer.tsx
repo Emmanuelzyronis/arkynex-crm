@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Instagram, Linkedin, Twitter } from "lucide-react";
+import { Github, Instagram, Twitter } from "lucide-react";
 
 import { Logo } from "@/components/landing/logo";
 
@@ -31,8 +31,8 @@ const footerLinks: { title: string; links: { label: string; href: string }[] }[]
 
 const socialLinks = [
   { label: "Arkynex on X", href: "https://x.com/arkynex", icon: Twitter },
-  { label: "Arkynex on LinkedIn", href: "https://www.linkedin.com/company/arkynex", icon: Linkedin },
   { label: "Arkynex on Instagram", href: "https://www.instagram.com/arkynex", icon: Instagram },
+  { label: "Arkynex on GitHub", href: "https://github.com/Emmanuelzyronis/arkynex-crm", icon: Github },
 ];
 
 export function Footer() {
